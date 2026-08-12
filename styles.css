@@ -6,3 +6,158 @@
 .narrator-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }.narrator-card { position:relative; display:grid; min-height:218px; grid-template-columns:1fr auto; grid-template-rows:auto auto 1fr auto; gap:7px; padding:20px 21px; border:1px solid var(--line); background:transparent; text-align:left; cursor:pointer; transition:.2s ease; }.narrator-card:hover,.narrator-card.is-selected { border-color:var(--accent); background:rgba(255,255,255,.18); }.narrator-number { color:var(--muted); font:10px var(--mono); }.voice-wave { display:flex; align-items:center; gap:3px; height:20px; }.voice-wave i { display:block; width:2px; border-radius:2px; background:var(--accent); }.voice-wave i:nth-child(1){height:6px}.voice-wave i:nth-child(2){height:14px}.voice-wave i:nth-child(3){height:20px}.voice-wave i:nth-child(4){height:11px}.voice-wave i:nth-child(5){height:17px}.voice-wave i:nth-child(6){height:8px}.voice-wave i:nth-child(7){height:15px}.wave-warm i { background:var(--sage); }.narrator-name { grid-column:1/-1; margin-top:18px; font:500 31px var(--serif); }.narrator-role { grid-column:1/-1; color:var(--accent); font-size:12px; }.narrator-description { align-self:end; color:var(--muted); font-size:13px; }.card-check { position:absolute; right:20px; bottom:18px; display:none; color:var(--accent); font-size:18px; }.is-selected .card-check { display:block; }
 .player { margin:10px 5% 0; padding:24px 0 18px; border-top:1px solid var(--ink); border-bottom:1px solid var(--line); }.player-topline { display:flex; justify-content:space-between; color:var(--muted); font:10px var(--mono); letter-spacing:.07em; text-transform:uppercase; }.passage { min-height:90px; padding:24px 0 20px; font:500 clamp(20px,3vw,27px)/1.25 var(--serif); letter-spacing:-.02em; }.passage-placeholder { color:var(--muted); font-style:italic; }.player-controls { display:flex; align-items:center; gap:14px; }.play-button { display:grid; place-items:center; width:42px; height:42px; border:0; border-radius:50%; background:var(--accent); color:white; font-size:14px; cursor:pointer; }.small-control { border:0; background:none; color:var(--muted); font-size:20px; cursor:pointer; }.seek { flex:1; accent-color:var(--accent); }.speed-select { padding:7px 9px; border:1px solid var(--line); background:transparent; color:var(--muted); font:10px var(--mono); }.engine-note { margin:14px 5% 0; text-align:center; font-size:9px; text-transform:none; letter-spacing:0; }.footer { display:flex; justify-content:space-between; padding:30px 5% 34px; color:var(--muted); font:9px var(--mono); letter-spacing:.05em; text-transform:uppercase; }.toast { position:fixed; right:22px; bottom:22px; max-width:300px; padding:12px 15px; transform:translateY(18px); opacity:0; pointer-events:none; border:1px solid var(--line); background:var(--ink); color:var(--paper); font-size:12px; transition:.25s ease; }.toast.is-visible { transform:translateY(0); opacity:1; }
 @media (max-width:650px) { .app-shell{padding:0 19px}.privacy-pill{display:none}.hero{padding:60px 3% 53px}.listen-panel{padding:35px 3%}.section-heading{align-items:start;flex-direction:column;gap:13px}.narrator-grid{grid-template-columns:1fr}.player{margin-left:3%;margin-right:3%}.footer{padding-left:3%;padding-right:3%;flex-direction:column;gap:10px}.file-status{align-items:flex-start;flex-wrap:wrap}.file-status .text-button{margin-left:40px} }
+
+/* Artwork background treatment: the supplied reference is cropped to the frame
+   and rendered behind the reading experience. The interface stays readable
+   through the veil while the color and texture remain visible. */
+body {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #171412;
+  color: #fbf4eb;
+}
+
+body::before {
+  position: fixed;
+  z-index: -2;
+  inset: 0;
+  content: "";
+  background-color: #171412;
+  background-image: url("./assets/zuna-frame-4k.webp");
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: auto max(100vh, 1180px);
+  filter: saturate(.92) contrast(.96);
+  pointer-events: none;
+}
+
+body::after {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(18, 14, 13, .5) 0%, rgba(18, 14, 13, .22) 32%, rgba(18, 14, 13, .75) 100%),
+    radial-gradient(ellipse at center, rgba(13, 13, 12, .08) 0%, rgba(13, 13, 12, .62) 84%);
+  pointer-events: none;
+}
+
+.app-shell {
+  position: relative;
+  z-index: 0;
+  max-width: 1180px;
+}
+
+.topbar {
+  border-bottom-color: rgba(251, 244, 235, .26);
+}
+
+.wordmark,
+.wordmark-mark,
+.privacy-pill,
+.local-tag,
+.engine-note,
+.footer,
+h2,
+.hero h1,
+.drop-title,
+.narrator-name,
+.passage {
+  color: #fbf4eb;
+}
+
+.wordmark-mark {
+  border-color: rgba(251, 244, 235, .82);
+}
+
+.hero-description,
+.drop-subtitle,
+.narrator-description,
+.file-status p,
+.player-topline,
+.small-control {
+  color: rgba(251, 244, 235, .7);
+}
+
+.listen-panel,
+.player {
+  border-color: rgba(251, 244, 235, .28);
+  background: rgba(25, 21, 19, .47);
+  box-shadow: 0 22px 65px rgba(0, 0, 0, .16);
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+  backdrop-filter: blur(18px) saturate(115%);
+}
+
+.listen-panel {
+  margin-top: 16px;
+}
+
+.drop-zone {
+  border-color: rgba(251, 244, 235, .5);
+  background: rgba(251, 244, 235, .055);
+}
+
+.drop-zone:hover,
+.drop-zone.is-dragging {
+  border-color: var(--accent);
+  background: rgba(191, 91, 60, .18);
+}
+
+.file-status {
+  background: rgba(251, 244, 235, .1);
+}
+
+.local-tag {
+  border-color: rgba(251, 244, 235, .32);
+}
+
+.narrator-card {
+  border-color: rgba(251, 244, 235, .25);
+  background: rgba(251, 244, 235, .045);
+}
+
+.narrator-card:hover,
+.narrator-card.is-selected {
+  border-color: var(--accent);
+  background: rgba(191, 91, 60, .2);
+}
+
+.narrator-number {
+  color: rgba(251, 244, 235, .58);
+}
+
+.player {
+  border-top-color: rgba(251, 244, 235, .72);
+}
+
+.speed-select {
+  border-color: rgba(251, 244, 235, .3);
+  background: rgba(25, 21, 19, .38);
+  color: rgba(251, 244, 235, .82);
+}
+
+.footer {
+  color: rgba(251, 244, 235, .6);
+}
+
+.engine-note {
+  color: rgba(251, 244, 235, .66);
+}
+
+.passage-placeholder {
+  color: rgba(251, 244, 235, .56);
+}
+
+@media (max-width: 650px) {
+  body::before {
+    background-size: auto max(100vh, 880px);
+    background-position: 50% top;
+  }
+
+  .listen-panel,
+  .player {
+    background: rgba(25, 21, 19, .6);
+  }
+}

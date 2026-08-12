@@ -63,6 +63,7 @@ PDF story examples will be used to validate text cleanup and narration behavior.
 ```text
 index.html       Browser shell and product UI
 styles.css       Visual system and responsive layout
+assets/           Optimized framed artwork background
 app.js           PDF extraction, cleanup, playback, and progress state
 tts-worker.js    Browser-local TTS worker
 README.md        Product scope and model status
