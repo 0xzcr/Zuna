@@ -21,7 +21,7 @@ The deployed prototype currently supports:
 - browser-local Kokoro narration with Web Speech as a fallback;
 - responsive desktop and mobile layouts.
 
-The public demo currently labels the intake as PDF and uses the two prototype voices to validate the listening flow. The product direction is broader: books first, with richer formats and chapter-aware reading to follow.
+The public demo is currently wired to readable PDF and TXT files and uses the two prototype voices to validate the listening flow. The product direction is broader: books first, with richer formats and chapter-aware reading to follow.
 
 ## Privacy model
 
@@ -39,7 +39,18 @@ The browser downloads the narration runtime and model files on first use. That m
 
 The current browser prototype runs a quantized Kokoro-82M ONNX model through `kokoro-js` inside a Web Worker. The model is loaded on demand, cached by the browser, and executed locally with WebAssembly. If the local runtime is unavailable, Zuna falls back to the browser’s speech synthesis API.
 
-Elias and Mira are prototype voice personas, not imitations of named actors. The next narrator milestone is one calm, warm female voice with an unhurried, intimate, quietly wise delivery. That custom model is being trained and optimized separately and is not bundled with the current deployment.
+Elias and Mira are prototype voice personas, not imitations of named actors. The next narrator milestone is one calm, warm female voice with an unhurried, intimate, quietly wise delivery.
+
+## [Under construction] Custom narrator model
+
+The `[Under construction]` model is the custom narrator that will eventually replace the prototype voices. It is being trained and optimized for browser-side inference and long-form book narration; it is not bundled with the current deployment.
+
+The training plan uses two complementary voice sets:
+
+1. **Primary voice set:** a consented recording from the target calm female narrator. This set establishes the narrator’s identity, timbre, pronunciation, and emotional character.
+2. **Narration craft set:** a separate consented or properly licensed set of expressive narration voices. This set provides additional examples of pacing, pauses, emphasis, sentence endings, dialogue, and sustained story delivery.
+
+The goal is one coherent Zuna narrator—not a collage of voices. The two sets will be balanced and aligned with transcripts during training, then evaluated for voice consistency, pronunciation, natural pauses, long-form stability, model size, browser memory, and time to first audio before being attached to the frontend.
 
 ## Current limitations
 
@@ -75,7 +86,7 @@ npx vercel
 npx vercel --prod
 ```
 
-Vercel serves the static shell, worker, styles, configuration, and artwork. PDF extraction, narration, playback, and local progress remain client-side.
+Vercel serves the static shell, worker, styles, configuration, and artwork. Book extraction, narration, playback, and local progress remain client-side.
 
 ## Project structure
 
