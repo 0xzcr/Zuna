@@ -1,0 +1,16 @@
+.git
+.git/**
+.DS_Store
+node_modules/
+dist/
+.venv/
+.training-venv/
+.local/
+training/
+models/
+*.onnx
+*.onnx.data
+*.safetensors
+*.ckpt
+*.pt
+*.pth

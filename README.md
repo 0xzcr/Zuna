@@ -58,6 +58,25 @@ The model is not bundled with this repository and is not attached to the fronten
 
 PDF story examples will be used to validate text cleanup and narration behavior. They only become TTS training data when paired with matching voice recordings and transcripts.
 
+## Deploy to Vercel
+
+Zuna is prepared as a zero-build static deployment. Import the repository into Vercel, keep the framework preset as **Other**, leave the build command empty, and deploy from the repository root. No environment variables or server-side services are required by the current prototype.
+
+Run the local check before deploying:
+
+```bash
+npm run check
+```
+
+The Vercel CLI can deploy the same project with:
+
+```bash
+npx vercel
+npx vercel --prod
+```
+
+The PDF, extracted text, playback state, and browser TTS model remain client-side. The model is downloaded and cached by each visitor's browser on first narration; Vercel only serves the static app and its artwork asset.
+
 ## Project structure
 
 ```text
@@ -66,6 +85,9 @@ styles.css       Visual system and responsive layout
 assets/           Optimized framed artwork background
 app.js           PDF extraction, cleanup, playback, and progress state
 tts-worker.js    Browser-local TTS worker
+vercel.json      Static deployment headers and asset caching
+.vercelignore    Training/model artifacts excluded from deploys
+package.json     Local checks and static preview scripts
 README.md        Product scope and model status
 HANDOFF.md       Engineering handoff
 TRUTH_BOARD.md   Decisions, hypotheses, and guardrails

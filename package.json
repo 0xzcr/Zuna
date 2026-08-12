@@ -1,0 +1,14 @@
+{
+  "name": "zuna",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A private, browser-local PDF narration companion.",
+  "scripts": {
+    "check": "node --check app.js && node --check tts-worker.js",
+    "dev": "python3 -m http.server 4173",
+    "preview": "python3 -m http.server 4173"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
