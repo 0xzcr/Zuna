@@ -255,7 +255,7 @@ function speakCurrent() {
 }
 
 function togglePlayback() {
-  if (!state.passages.length) { notify('Add a PDF to begin.'); return; }
+  if (!state.passages.length) { notify('Add a book to begin.'); return; }
   if (state.speaking) {
     if (currentAudio) currentAudio.pause();
     else window.speechSynthesis?.pause();
@@ -269,7 +269,7 @@ function togglePlayback() {
 }
 
 async function extractPdf(file) {
-  notify('Reading your PDF locally…');
+  notify('Reading your book locally…');
   const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');
   pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
   const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
@@ -286,8 +286,8 @@ async function handleFile(file) {
   if (!file) return;
   if (file.type === 'text/plain' || file.name.endsWith('.txt')) setDocument(await file.text(), file.name);
   else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-    try { await extractPdf(file); } catch (error) { console.error(error); notify('I could not read that PDF. Try a text-based PDF.'); }
-  } else notify('Please choose a readable PDF or text file.');
+    try { await extractPdf(file); } catch (error) { console.error(error); notify('I could not read that book. Try a readable file.'); }
+  } else notify('Please choose a readable book file (PDF or TXT).');
 }
 
 document.querySelectorAll('.narrator-card').forEach((card) => card.addEventListener('click', () => {
