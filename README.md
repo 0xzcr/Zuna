@@ -6,7 +6,7 @@ Upload a readable PDF or text file, choose a narrator, and start listening in th
 
 > Your books, given a voice worth listening to.
 
-[Open the live demo](https://zuna-taupe.vercel.app/)
+Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 
 ## What is live
 
@@ -51,15 +51,6 @@ The training plan uses two complementary voice sets:
 2. **Narration craft set:** a separate consented or properly licensed set of expressive narration voices. This set provides additional examples of pacing, pauses, emphasis, sentence endings, dialogue, and sustained story delivery.
 
 The goal is one coherent Zuna narrator—not a collage of voices. The two sets will be balanced and aligned with transcripts during training, then evaluated for voice consistency, pronunciation, natural pauses, long-form stability, model size, browser memory, and time to first audio before being attached to the frontend.
-
-## Current limitations
-
-- Scanned or image-only PDFs are not supported because OCR is not included yet.
-- EPUB and other book formats are not wired in yet.
-- Chapter detection and “start at Chapter 1” behavior are planned parser features, not capabilities of the TTS model.
-- Narration quality depends on the browser, device memory, and first model download.
-- The current demo is optimized for modern desktop browsers; mobile support is experimental.
-- There is no audiobook export, cloud library, sync, account system, or social sharing.
 
 ## Run locally
 
