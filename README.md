@@ -1,98 +1,101 @@
 # Zuna
 
-Zuna turns a readable PDF into a private, listenable audiobook—narrated locally in the browser by a small set of distinctive voices.
+Zuna is a private reading companion that turns readable books into listening sessions.
 
-> Your PDFs, given a voice worth listening to.
+Upload a readable PDF or text file, choose a narrator, and start listening in the browser. The current experience is intentionally simple: no account, no upload pipeline, and no server-side processing of the book itself.
 
-Zuna is a quiet reading companion, not a text-to-speech utility. Drop in a PDF, choose a narrator, and start listening within seconds. Text extraction, narration, playback, and progress tracking happen on the user’s device; the PDF is never uploaded.
+> Your books, given a voice worth listening to.
 
-## The first experience
+[Open the live demo](https://zuna-taupe.vercel.app/)
 
-1. Open Zuna.
-2. Drop in a readable PDF.
-3. Zuna extracts and cleans the text locally.
-4. Choose a narrator and hear the first paragraph quickly.
-5. Resume later from the same place.
+## What is live
 
-The first convincing prototype should support one PDF, one narrator, browser-local extraction, sentence-level playback, basic highlighting, and local resume state. It does not need accounts, cloud storage, OCR, or audio export.
+The deployed prototype currently supports:
 
-## Narrator direction
+- readable PDF and plain-text file intake;
+- local text extraction and cleanup in the browser;
+- sentence-based passage playback;
+- two prototype narrator choices, Elias and Mira;
+- play, pause, previous, next, seek, and playback speed controls;
+- local resume position and narrator preferences;
+- browser-local Kokoro narration with Web Speech as a fallback;
+- responsive desktop and mobile layouts.
 
-The product direction is now one calm female narrator: warm, unhurried, intimate, and quietly wise. The current Elias and Mira cards are temporary prototype voices used to validate the listening flow; they are not the final trained narrator.
+The public demo currently labels the intake as PDF and uses the two prototype voices to validate the listening flow. The product direction is broader: books first, with richer formats and chapter-aware reading to follow.
 
-The final voice will be trained from a consented recording and optimized for long-form story narration.
+## Privacy model
 
-## Product principles
+Zuna is designed to keep the reading experience on the user’s device.
 
-- **Private by default:** “Your PDF stays on your device” should be visible at the point of upload.
-- **Fast to first sound:** generate the first chunk first and continue in the background.
-- **Atmospheric:** thoughtful pacing, useful pauses, clean typography, and restrained interface design.
-- **Honest about capability:** launch for modern desktop browsers and readable PDFs; do not imply mobile or scanned-PDF support yet.
-- **No account required:** a first listen should work without signup.
+- The selected book is read in the browser.
+- Extracted text is prepared locally for narration.
+- Book content is not sent to a Zuna backend.
+- Playback position and preferences are stored locally in the browser.
+- No login, database, file storage, or server-side narration is required by the current prototype.
 
-## MVP
+The browser downloads the narration runtime and model files on first use. That model download is separate from the user’s book content.
 
-Browser PDF upload, local text extraction and cleanup, one local narrator model, sentence or paragraph chunking, play/pause/seek, playback speed, current-text highlighting, resume position, IndexedDB progress, and a responsive desktop interface.
+## Narration
 
-Later candidates include chapter detection, bookmarks, sleep timer, dark mode, voice previews, model download progress, and a continue-listening screen. Cloud storage, OCR, voice cloning, social sharing, audiobook export, and accounts before first use are out of scope for version one.
+The current browser prototype runs a quantized Kokoro-82M ONNX model through `kokoro-js` inside a Web Worker. The model is loaded on demand, cached by the browser, and executed locally with WebAssembly. If the local runtime is unavailable, Zuna falls back to the browser’s speech synthesis API.
 
-## Suggested architecture
+Elias and Mira are prototype voice personas, not imitations of named actors. The next narrator milestone is one calm, warm female voice with an unhurried, intimate, quietly wise delivery. That custom model is being trained and optimized separately and is not bundled with the current deployment.
 
-The static frontend hosts the interface. PDF.js extracts text in the browser, a cleanup/chunking layer prepares narration, and a Web Worker runs the quantized Kokoro ONNX model through WASM. Web Audio API handles playback; IndexedDB or OPFS can store local progress and cached audio.
+## Current limitations
 
-## Browser prototype
+- Scanned or image-only PDFs are not supported because OCR is not included yet.
+- EPUB and other book formats are not wired in yet.
+- Chapter detection and “start at Chapter 1” behavior are planned parser features, not capabilities of the TTS model.
+- Narration quality depends on the browser, device memory, and first model download.
+- The current demo is optimized for modern desktop browsers; mobile support is experimental.
+- There is no audiobook export, cloud library, sync, account system, or social sharing.
 
-Open `index.html` through a local server to try the first vertical slice. It supports readable PDF or text-file intake, local text cleanup, sentence passages, two narrator personas, browser-local speech preview, playback controls, and local resume state.
+## Run locally
 
-The browser prototype currently uses Kokoro-82M through `kokoro-js` in a Web Worker. The quantized ONNX model is fetched on first use, cached by the browser, and run locally with WASM. The browser Web Speech API remains a fallback for unsupported browsers.
+Zuna is a zero-build static app. Serve the repository over HTTP so browser modules and workers load correctly:
 
-Kokoro is an open-weight 82M TTS model. The browser-ready ONNX model is Apache-2.0 licensed and exposes multiple English voices. It is the only narrator currently attached to the frontend.
+```bash
+npm run dev
+```
 
-The model reference is `onnx-community/Kokoro-82M-v1.0-ONNX`; the browser package is pinned to `kokoro-js@1.2.1`. The app uses the `q8` model variant to balance quality and first-download size.
+Then open [http://127.0.0.1:4173](http://127.0.0.1:4173).
 
-## Model status
-
-The custom narrator model is currently being trained and optimized separately from the frontend. The target is a small browser-compatible ONNX/WebAssembly voice model trained on a consented female voice recording and tuned for calm, long-form narration.
-
-The model is not bundled with this repository and is not attached to the frontend yet. Before integration, it must pass voice quality, pronunciation, chapter-transition, model-size, browser-memory, and time-to-first-audio checks.
-
-PDF story examples will be used to validate text cleanup and narration behavior. They only become TTS training data when paired with matching voice recordings and transcripts.
-
-## Deploy to Vercel
-
-Zuna is prepared as a zero-build static deployment. Import the repository into Vercel, keep the framework preset as **Other**, leave the build command empty, and deploy from the repository root. No environment variables or server-side services are required by the current prototype.
-
-Run the local check before deploying:
+Before committing or deploying, run:
 
 ```bash
 npm run check
 ```
 
-The Vercel CLI can deploy the same project with:
+## Deploy to Vercel
+
+The repository is prepared for a static Vercel deployment. Import the repository, use the **Other** framework preset, leave the build command empty, and deploy from the repository root. The current app does not require environment variables or server-side services.
 
 ```bash
 npx vercel
 npx vercel --prod
 ```
 
-The PDF, extracted text, playback state, and browser TTS model remain client-side. The model is downloaded and cached by each visitor's browser on first narration; Vercel only serves the static app and its artwork asset.
+Vercel serves the static shell, worker, styles, configuration, and artwork. PDF extraction, narration, playback, and local progress remain client-side.
 
 ## Project structure
 
 ```text
 index.html       Browser shell and product UI
-styles.css       Visual system and responsive layout
-assets/           Optimized framed artwork background
-app.js           PDF extraction, cleanup, playback, and progress state
-tts-worker.js    Browser-local TTS worker
+styles.css       Visual system, background treatment, and responsive layout
+assets/          Optimized framed artwork background
+app.js           File intake, text cleanup, playback, and local state
+tts-worker.js    Browser-local Kokoro TTS worker
 vercel.json      Static deployment headers and asset caching
 .vercelignore    Training/model artifacts excluded from deploys
 package.json     Local checks and static preview scripts
-README.md        Product scope and model status
-HANDOFF.md       Engineering handoff
-TRUTH_BOARD.md   Decisions, hypotheses, and guardrails
+TRUTH_BOARD.md   Product decisions, hypotheses, and guardrails
 ```
 
-## Success signal
+## Roadmap
 
-The activation event is a user listening to at least 60 seconds of their own PDF. The first prototype succeeds when a user can upload, hear the first paragraph quickly, listen for five minutes, close the browser, reopen Zuna, and resume.
+1. Replace the prototype voices with the trained calm female narrator.
+2. Add deterministic book cleanup and chapter-start detection.
+3. Add EPUB support and stronger long-form chunking.
+4. Improve first-audio time, pronunciation, pauses, and resume behavior across devices.
+
+Zuna is successful when someone can bring a book they meant to finish, hear the first passage quickly, and return to it without giving up their private reading data.
