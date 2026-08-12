@@ -1,0 +1,15 @@
+.venv/
+.training-venv/
+.local/piper/
+.local/training/
+.local/
+__pycache__/
+.DS_Store
+node_modules/
+dist/
+*.onnx
+*.onnx.data
+*.safetensors
+*.ckpt
+*.pt
+*.pth
