@@ -44,9 +44,18 @@ export class F5Runtime {
     this.fetch = fetcher;
   }
 
+  assetUrl(path) {
+    if (!this.config.assetVersion) return path;
+    return `${path}${path.includes('?') ? '&' : '?'}v=${this.config.assetVersion}`;
+  }
+
+  modelUrl(file) {
+    return this.assetUrl(`${this.config.baseUrl}/${file}`);
+  }
+
   async loadModel(file, parts = []) {
-    if (!parts.length) return `${this.config.baseUrl}/${file}`;
-    const buffers = await Promise.all(parts.map((part) => this.fetch(`${this.config.baseUrl}/${part}`).then((response) => {
+    if (!parts.length) return this.modelUrl(file);
+    const buffers = await Promise.all(parts.map((part) => this.fetch(this.modelUrl(part)).then((response) => {
       if (!response.ok) throw new Error(`Could not load model part ${part} (${response.status}).`);
       return response.arrayBuffer();
     })));
@@ -69,11 +78,11 @@ export class F5Runtime {
       if (transformerProvider === 'webgpu') transformerOptions.preferredOutputLocation = 'gpu-buffer';
       const transformerModel = await this.loadModel(FILES[1], this.config.transformerParts);
       const transformer = await this.ort.InferenceSession.create(transformerModel, transformerOptions);
-      const preprocess = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[0]}`, options(['wasm']));
-      const decode = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[2]}`, options(['wasm']));
+      const preprocess = await this.ort.InferenceSession.create(this.modelUrl(FILES[0]), options(['wasm']));
+      const decode = await this.ort.InferenceSession.create(this.modelUrl(FILES[2]), options(['wasm']));
       const [vocabText, ...voiceBuffers] = await Promise.all([
-        this.fetch(`${this.config.baseUrl}/vocab.txt`).then((response) => response.text()),
-        ...Object.values(this.config.voices).map(({ audio }) => this.fetch(audio).then((response) => response.arrayBuffer())),
+        this.fetch(this.modelUrl('vocab.txt')).then((response) => response.text()),
+        ...Object.values(this.config.voices).map(({ audio }) => this.fetch(this.assetUrl(audio)).then((response) => response.arrayBuffer())),
       ]);
       this.sessions = { preprocess, transformer, decode };
       this.transformerProvider = transformerProvider;

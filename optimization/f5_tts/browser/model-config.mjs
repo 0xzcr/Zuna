@@ -1,5 +1,6 @@
 export const F5_MODEL = {
   baseUrl: '/models/f5/fp16-nfe8',
+  assetVersion: '20260813-f5-v2',
   sampleRate: 24000,
   hopLength: 256,
   nfeSteps: 8,
