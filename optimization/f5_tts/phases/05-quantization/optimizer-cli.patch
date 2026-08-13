@@ -1,0 +1,44 @@
+diff --git a/Export_ONNX/F5_TTS/Optimize_ONNX.py b/Export_ONNX/F5_TTS/Optimize_ONNX.py
+index 47eadbc..23870a2 100644
+--- a/Export_ONNX/F5_TTS/Optimize_ONNX.py
++++ b/Export_ONNX/F5_TTS/Optimize_ONNX.py
+@@ -78,19 +78,24 @@ CONFIG = OptimizerConfig(
+ def parse_args() -> argparse.Namespace:
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument("--model", help="Optimize one graph by name, with or without the .onnx suffix.")
++    parser.add_argument("--method", choices=("Q4", "Q8", "DYNAMIC", "F16", "F32"))
+     parser.add_argument("--source-folder", type=Path, default=SOURCE_FOLDER)
+     parser.add_argument("--output-folder", type=Path, default=OUTPUT_FOLDER)
+     parser.add_argument("--check-only", action="store_true")
+     return parser.parse_args()
+ 
+ 
+-def select_plans(model: str | None) -> dict[str, Plan]:
++def select_plans(model: str | None, method: str | None = None) -> dict[str, Plan]:
+     if model is None:
+-        return MODEL_PLANS
+-    model_name = Path(model).stem
+-    if model_name not in MODEL_PLANS:
+-        raise ValueError(f"Unknown model {model!r}; expected one of {tuple(MODEL_PLANS)}.")
+-    return {model_name: MODEL_PLANS[model_name]}
++        plans = MODEL_PLANS
++    else:
++        model_name = Path(model).stem
++        if model_name not in MODEL_PLANS:
++            raise ValueError(f"Unknown model {model!r}; expected one of {tuple(MODEL_PLANS)}.")
++        plans = {model_name: MODEL_PLANS[model_name]}
++    if method is not None:
++        plans = {name: replace(plan, method=method) for name, plan in plans.items()}
++    return plans
+ 
+ 
+ def resolve_plans(config: OptimizerConfig):
+@@ -119,7 +124,7 @@ def main() -> None:
+         CONFIG,
+         original_folder_path=str(args.source_folder.expanduser().resolve()),
+         optimized_folder_path=str(args.output_folder.expanduser().resolve()),
+-        model_plans=select_plans(args.model),
++        model_plans=select_plans(args.model, args.method),
+     )
+     resolved_plans = resolve_plans(config)
+     if args.check_only:

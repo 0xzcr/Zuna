@@ -25,8 +25,8 @@ Run: `20260813T144641Z-pytorch-fp32-nfe32-mps`
 | Male | 7.94 s | 12.01 s | 15.245 s | 1.269 |
 
 The longer male reference materially increases sequence length and latency. Both production
-voice prompts should be reduced to approximately two seconds or replaced by distilled speaker
-conditioning.
+voice prompts should be reduced to approximately two seconds while retaining the original
+voice characteristics. Model distillation is intentionally excluded.
 
 ## Quality
 
@@ -45,4 +45,3 @@ post-vocoder gain/limiter stage is required to normalize loudness and eliminate 
 
 Export the same checkpoint as split FP32 ONNX graphs and require output parity before testing
 FP16, lower NFE, INT8, or INT4 variants.
-

@@ -1,0 +1,36 @@
+{
+  "samples": [
+    {
+      "voice": "female",
+      "profile": "q8-nfe8",
+      "sample": "samples/q8-nfe8-female.wav",
+      "reference_audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_female_aligned_source/wavs/clip_0001.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "asr/q8-nfe8-female.txt"
+    },
+    {
+      "voice": "male",
+      "profile": "q8-nfe8",
+      "sample": "samples/q8-nfe8-male.wav",
+      "reference_audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0001.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "asr/q8-nfe8-male.txt"
+    },
+    {
+      "voice": "female",
+      "profile": "q4-nfe8",
+      "sample": "samples/q4-nfe8-female.wav",
+      "reference_audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_female_aligned_source/wavs/clip_0001.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "asr/q4-nfe8-female.txt"
+    },
+    {
+      "voice": "male",
+      "profile": "q4-nfe8",
+      "sample": "samples/q4-nfe8-male.wav",
+      "reference_audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0001.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "asr/q4-nfe8-male.txt"
+    }
+  ]
+}

@@ -1,0 +1,220 @@
+{
+  "variants": {
+    "q8-nfe8": {
+      "artifact_root": "/Users/umangsharma/Desktop/F5-TTS/ckpts/zuna_dual_voice_v3/onnx/q8-nfe8",
+      "total_bytes": 496007921,
+      "graphs": [
+        {
+          "file": "F5_Decode.onnx",
+          "bytes": 58359944,
+          "sha256": "234ec7841f50d199e67985428e89439e05bff77d80f427d59492e943835f3202",
+          "nodes": 147,
+          "opset": 20,
+          "operators": {
+            "Constant": 24,
+            "Unsqueeze": 2,
+            "Slice": 4,
+            "Concat": 3,
+            "Transpose": 21,
+            "Conv": 9,
+            "LayerNormalization": 10,
+            "MatMul": 17,
+            "Add": 25,
+            "Gelu": 8,
+            "Mul": 11,
+            "Split": 1,
+            "Exp": 1,
+            "Clip": 2,
+            "Cos": 1,
+            "Sin": 1,
+            "ConvTranspose": 2,
+            "Shape": 1,
+            "Gather": 1,
+            "ConstantOfShape": 1,
+            "Div": 1,
+            "Cast": 1
+          }
+        },
+        {
+          "file": "F5_Metadata.onnx",
+          "bytes": 464,
+          "sha256": "6d11e2c9892b50d78d7f365e4e08c76940aaeee191a99d9ff36956f0097412a2",
+          "nodes": 1,
+          "opset": 20,
+          "operators": {
+            "Identity": 1
+          }
+        },
+        {
+          "file": "F5_Preprocess.onnx",
+          "bytes": 42447465,
+          "sha256": "b1d33471012cb2d9d1784a2aa7e787c04d0a3ce5b038f1e1216b1e03cc99ac26",
+          "nodes": 194,
+          "opset": 20,
+          "operators": {
+            "Cast": 3,
+            "Mul": 13,
+            "ReduceMean": 5,
+            "Sqrt": 2,
+            "Constant": 69,
+            "Div": 5,
+            "Clip": 4,
+            "Reshape": 1,
+            "Reciprocal": 1,
+            "Slice": 11,
+            "Concat": 6,
+            "Conv": 5,
+            "Split": 2,
+            "Add": 27,
+            "MatMul": 9,
+            "Transpose": 9,
+            "Log": 1,
+            "Gather": 2,
+            "Shape": 2,
+            "ConstantOfShape": 2,
+            "ReduceSum": 1,
+            "Sub": 1,
+            "RandomNormalLike": 1,
+            "LayerNormalization": 4,
+            "Gelu": 4,
+            "ReduceL2": 4
+          }
+        },
+        {
+          "file": "F5_Transformer.onnx",
+          "bytes": 395200048,
+          "sha256": "7d8b62fbdcb3f2d71cf2905fae62446f2cb74e6490016893263cebef176e11bc",
+          "nodes": 999,
+          "opset": 20,
+          "operators": {
+            "Concat": 47,
+            "Gather": 46,
+            "QuickGelu": 1,
+            "MatMulNBits": 91,
+            "Transpose": 156,
+            "Split": 69,
+            "Conv": 2,
+            "Softplus": 2,
+            "Add": 136,
+            "Tanh": 2,
+            "Mul": 182,
+            "SkipLayerNormalization": 45,
+            "Reshape": 44,
+            "Slice": 88,
+            "MatMul": 44,
+            "Softmax": 22,
+            "FastGelu": 22
+          }
+        }
+      ]
+    },
+    "q4-nfe8": {
+      "artifact_root": "/Users/umangsharma/Desktop/F5-TTS/ckpts/zuna_dual_voice_v3/onnx/q4-nfe8",
+      "total_bytes": 327958570,
+      "graphs": [
+        {
+          "file": "F5_Decode.onnx",
+          "bytes": 58359944,
+          "sha256": "234ec7841f50d199e67985428e89439e05bff77d80f427d59492e943835f3202",
+          "nodes": 147,
+          "opset": 20,
+          "operators": {
+            "Constant": 24,
+            "Unsqueeze": 2,
+            "Slice": 4,
+            "Concat": 3,
+            "Transpose": 21,
+            "Conv": 9,
+            "LayerNormalization": 10,
+            "MatMul": 17,
+            "Add": 25,
+            "Gelu": 8,
+            "Mul": 11,
+            "Split": 1,
+            "Exp": 1,
+            "Clip": 2,
+            "Cos": 1,
+            "Sin": 1,
+            "ConvTranspose": 2,
+            "Shape": 1,
+            "Gather": 1,
+            "ConstantOfShape": 1,
+            "Div": 1,
+            "Cast": 1
+          }
+        },
+        {
+          "file": "F5_Metadata.onnx",
+          "bytes": 464,
+          "sha256": "6d11e2c9892b50d78d7f365e4e08c76940aaeee191a99d9ff36956f0097412a2",
+          "nodes": 1,
+          "opset": 20,
+          "operators": {
+            "Identity": 1
+          }
+        },
+        {
+          "file": "F5_Preprocess.onnx",
+          "bytes": 42447465,
+          "sha256": "b1d33471012cb2d9d1784a2aa7e787c04d0a3ce5b038f1e1216b1e03cc99ac26",
+          "nodes": 194,
+          "opset": 20,
+          "operators": {
+            "Cast": 3,
+            "Mul": 13,
+            "ReduceMean": 5,
+            "Sqrt": 2,
+            "Constant": 69,
+            "Div": 5,
+            "Clip": 4,
+            "Reshape": 1,
+            "Reciprocal": 1,
+            "Slice": 11,
+            "Concat": 6,
+            "Conv": 5,
+            "Split": 2,
+            "Add": 27,
+            "MatMul": 9,
+            "Transpose": 9,
+            "Log": 1,
+            "Gather": 2,
+            "Shape": 2,
+            "ConstantOfShape": 2,
+            "ReduceSum": 1,
+            "Sub": 1,
+            "RandomNormalLike": 1,
+            "LayerNormalization": 4,
+            "Gelu": 4,
+            "ReduceL2": 4
+          }
+        },
+        {
+          "file": "F5_Transformer.onnx",
+          "bytes": 227150697,
+          "sha256": "eb69400294155fc86484d7736b1890e002a07884cbec5178b43dc79109adb667",
+          "nodes": 999,
+          "opset": 20,
+          "operators": {
+            "Concat": 47,
+            "Gather": 46,
+            "QuickGelu": 1,
+            "MatMulNBits": 91,
+            "Transpose": 156,
+            "Split": 69,
+            "Conv": 2,
+            "Softplus": 2,
+            "Add": 136,
+            "Tanh": 2,
+            "Mul": 182,
+            "SkipLayerNormalization": 45,
+            "Reshape": 44,
+            "Slice": 88,
+            "MatMul": 44,
+            "Softmax": 22,
+            "FastGelu": 22
+          }
+        }
+      ]
+    }
+  }
+}
