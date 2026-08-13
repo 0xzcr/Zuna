@@ -18,7 +18,7 @@ The deployed prototype currently supports:
 - two prototype narrator choices, Elias and Mira;
 - play, pause, previous, next, seek, and playback speed controls;
 - local resume position and narrator preferences;
-- browser-local Kokoro narration with Web Speech as a fallback;
+- browser-local F5 narration with Web Speech as a fallback;
 - responsive desktop and mobile layouts.
 
 The public demo is currently wired to readable PDF and TXT files and uses the two prototype voices to validate the listening flow. The product direction is broader: books first, with richer formats and chapter-aware reading to follow.
@@ -37,13 +37,13 @@ The browser downloads the narration runtime and model files on first use. That m
 
 ## Narration
 
-The current browser prototype runs a quantized Kokoro-82M ONNX model through `kokoro-js` inside a Web Worker. The model is loaded on demand, cached by the browser, and executed locally with WebAssembly. If the local runtime is unavailable, Zuna falls back to the browser’s speech synthesis API.
+The current browser prototype runs the validated dual-voice F5 ONNX package inside a persistent Web Worker. The model is loaded on demand, cached by the browser, and executed locally with threaded WebAssembly (or WebGPU when the device supports the graph). If the local runtime is unavailable, Zuna falls back to the browser’s speech synthesis API.
 
 Elias and Mira are prototype voice personas, not imitations of named actors. The next narrator milestone is one calm, warm female voice with an unhurried, intimate, quietly wise delivery.
 
 ## [Under construction] Custom narrator model
 
-The `[Under construction]` model is the custom narrator that will eventually replace the prototype voices. It is being trained and optimized for browser-side inference and long-form book narration; it is not bundled with the current deployment.
+The custom narrator is the F5 model attached to the current deployment. It is trained and optimized for browser-side inference and long-form book narration.
 
 The training plan uses two complementary voice sets:
 
@@ -86,9 +86,9 @@ index.html       Browser shell and product UI
 styles.css       Visual system, background treatment, and responsive layout
 assets/          Optimized framed artwork background
 app.js           File intake, text cleanup, playback, and local state
-tts-worker.js    Browser-local Kokoro TTS worker
+tts-worker.js    Browser-local F5 TTS worker
 vercel.json      Static deployment headers and asset caching
-.vercelignore    Training/model artifacts excluded from deploys
+.vercelignore    Training artifacts excluded from deploys; staged model shards are included
 package.json     Local checks and static preview scripts
 TRUTH_BOARD.md   Product decisions, hypotheses, and guardrails
 ```

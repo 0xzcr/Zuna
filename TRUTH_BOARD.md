@@ -15,9 +15,9 @@ This is the current source of truth for product decisions. A statement is only a
 | Platform | The initial target is the modern desktop browser. |
 | Activation | Listening to at least 60 seconds of a user’s own PDF is the first meaningful success event. |
 | Prototype boundary | One PDF, one narrator, local extraction, sentence playback, highlighting, and resume state are enough to validate the idea. |
-| Browser narrator | Kokoro-82M ONNX runs in a Web Worker through `kokoro-js@1.2.1` with WASM inference. Elias uses `bm_fable`; Mira uses `af_heart`. |
+| Browser narrator | The validated dual-voice F5 ONNX package runs in a persistent Web Worker through threaded WASM, with WebGPU selected when compatible. Elias maps to the male prompt and Mira to the female prompt. |
 | Browser fallback | Web Speech remains available when the local model cannot load. |
-| Model status | The custom narrator model is being trained and optimized separately; it is not attached to the frontend yet. |
+| Model status | The optimized F5 narrator is attached to the frontend and deployed with Vercel-compatible transformer shards. |
 | Browser constraint | The final narrator must run locally in the browser through ONNX/WebAssembly or an equivalent browser runtime. |
 | Chapter start | Chapter detection belongs in the PDF parser; it should not be learned by the TTS model. |
 
@@ -42,7 +42,7 @@ This is the current source of truth for product decisions. A statement is only a
 
 ## Open decisions
 
-- Does Kokoro’s first-download and generation time meet the target across supported desktop browsers?
+- Does the F5 first-download and generation time meet the target across supported desktop browsers?
 - What PDF cleanup rules remove repeated headers and page numbers without damaging meaningful content?
 - Should progress resume at the last sentence, paragraph, or timestamp within generated audio?
 - What is the minimum acceptable offline behavior after a model has been downloaded?
