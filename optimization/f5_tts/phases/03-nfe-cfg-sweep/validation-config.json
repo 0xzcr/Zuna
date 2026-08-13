@@ -1,0 +1,38 @@
+{
+  "name": "pytorch-nfe8-cfg2-validation-mps",
+  "model": "F5TTS_Base",
+  "checkpoint": "ckpts/zuna_dual_voice_v3/zuna_dual_voice_final.safetensors",
+  "device": "mps",
+  "nfe_step": 8,
+  "cfg_strength": 2.0,
+  "sway_sampling_coef": -1.0,
+  "seed": 20260813,
+  "iterations": 1,
+  "voices": {
+    "female": {
+      "reference_audio": "data/zuna_female_aligned_source/wavs/clip_0328.wav",
+      "reference_text": "You begin to pull away from Mars."
+    },
+    "male": {
+      "reference_audio": "data/zuna_story_source/wavs/clip_0024.wav",
+      "reference_text": "the words on the page came alive."
+    }
+  },
+  "profiles": [
+    {
+      "name": "short-4s",
+      "target_seconds": 4,
+      "text": "The evening settles softly around the quiet house."
+    },
+    {
+      "name": "medium-8s",
+      "target_seconds": 8,
+      "text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still."
+    },
+    {
+      "name": "long-12s",
+      "target_seconds": 12,
+      "text": "Take a slow breath and let the noise of the day disappear. The fire glows beside you, the night is calm, and there is nowhere else you need to be."
+    }
+  ]
+}

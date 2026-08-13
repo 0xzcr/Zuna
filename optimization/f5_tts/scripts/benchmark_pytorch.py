@@ -163,51 +163,70 @@ def main() -> None:
     }
     json_write(run_dir / "metrics.json", metrics)
 
-    for voice_name, voice in config["voices"].items():
-        reference_audio = f5_root / voice["reference_audio"]
-        reference_info = sf.info(reference_audio)
-        reference_seconds = reference_info.frames / reference_info.samplerate
-        for profile in config["profiles"]:
-            for iteration in range(1, config["iterations"] + 1):
-                sample_name = f"{voice_name}-{profile['name']}-iter-{iteration:02d}.wav"
-                output = samples_dir / sample_name
-                print(f"\n[{voice_name}/{profile['name']}/iteration-{iteration}] generating...")
-                sync(device)
-                started = time.perf_counter()
-                model.infer(
-                    ref_file=str(reference_audio),
-                    ref_text=voice["reference_text"],
-                    gen_text=profile["text"],
-                    show_info=lambda message: print(f"  {message}"),
-                    progress=None,
-                    cfg_strength=config["cfg_strength"],
-                    nfe_step=config["nfe_step"],
-                    sway_sampling_coef=config["sway_sampling_coef"],
-                    fix_duration=reference_seconds + profile["target_seconds"],
-                    file_wave=str(output),
-                    seed=config["seed"],
-                )
-                sync(device)
-                elapsed = time.perf_counter() - started
-                audio = audio_metrics(output)
-                record = {
-                    "voice": voice_name,
-                    "profile": profile["name"],
-                    "iteration": iteration,
-                    "expected_text": profile["text"],
-                    "reference_seconds": reference_seconds,
-                    "output": str(output.relative_to(run_dir)),
-                    "generation_seconds": elapsed,
-                    "rtf": elapsed / audio["duration_seconds"],
-                    "audio": audio,
-                    "memory": memory_snapshot(device),
-                }
-                metrics["samples"].append(record)
-                json_write(run_dir / "metrics.json", metrics)
-                print(
-                    f"  {audio['duration_seconds']:.3f}s audio in {elapsed:.3f}s "
-                    f"(RTF {record['rtf']:.3f})"
-                )
+    variants = config.get(
+        "variants",
+        [
+            {
+                "name": f"nfe{config['nfe_step']}-cfg{config['cfg_strength']}",
+                "nfe_step": config["nfe_step"],
+                "cfg_strength": config["cfg_strength"],
+            }
+        ],
+    )
+    for variant in variants:
+        for voice_name, voice in config["voices"].items():
+            reference_audio = f5_root / voice["reference_audio"]
+            reference_info = sf.info(reference_audio)
+            reference_seconds = reference_info.frames / reference_info.samplerate
+            for profile in config["profiles"]:
+                for iteration in range(1, config["iterations"] + 1):
+                    sample_name = (
+                        f"{variant['name']}-{voice_name}-{profile['name']}-iter-{iteration:02d}.wav"
+                    )
+                    output = samples_dir / sample_name
+                    print(
+                        f"\n[{variant['name']}/{voice_name}/{profile['name']}/"
+                        f"iteration-{iteration}] generating..."
+                    )
+                    sync(device)
+                    started = time.perf_counter()
+                    model.infer(
+                        ref_file=str(reference_audio),
+                        ref_text=voice["reference_text"],
+                        gen_text=profile["text"],
+                        show_info=lambda message: print(f"  {message}"),
+                        progress=None,
+                        cfg_strength=variant["cfg_strength"],
+                        nfe_step=variant["nfe_step"],
+                        sway_sampling_coef=config["sway_sampling_coef"],
+                        fix_duration=reference_seconds + profile["target_seconds"],
+                        file_wave=str(output),
+                        seed=config["seed"],
+                    )
+                    sync(device)
+                    elapsed = time.perf_counter() - started
+                    audio = audio_metrics(output)
+                    record = {
+                        "variant": variant["name"],
+                        "nfe_step": variant["nfe_step"],
+                        "cfg_strength": variant["cfg_strength"],
+                        "voice": voice_name,
+                        "profile": profile["name"],
+                        "iteration": iteration,
+                        "expected_text": profile["text"],
+                        "reference_seconds": reference_seconds,
+                        "output": str(output.relative_to(run_dir)),
+                        "generation_seconds": elapsed,
+                        "rtf": elapsed / audio["duration_seconds"],
+                        "audio": audio,
+                        "memory": memory_snapshot(device),
+                    }
+                    metrics["samples"].append(record)
+                    json_write(run_dir / "metrics.json", metrics)
+                    print(
+                        f"  {audio['duration_seconds']:.3f}s audio in {elapsed:.3f}s "
+                        f"(RTF {record['rtf']:.3f})"
+                    )
 
     metrics["status"] = "complete"
     metrics["completed_at"] = datetime.now(timezone.utc).isoformat()

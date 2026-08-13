@@ -1,0 +1,180 @@
+{
+  "status": "complete",
+  "run_id": "20260813T151459Z-pytorch-nfe8-cfg2-validation-mps",
+  "load_seconds": 2.3912660000205506,
+  "memory_before_load": {
+    "peak_rss_bytes": 745996288,
+    "mps_current_allocated_bytes": 0,
+    "mps_driver_allocated_bytes": 393216
+  },
+  "memory_after_load": {
+    "peak_rss_bytes": 3983392768,
+    "mps_current_allocated_bytes": 1419505408,
+    "mps_driver_allocated_bytes": 3649552384
+  },
+  "samples": [
+    {
+      "variant": "nfe8-cfg2.0",
+      "nfe_step": 8,
+      "cfg_strength": 2.0,
+      "voice": "female",
+      "profile": "short-4s",
+      "iteration": 1,
+      "expected_text": "The evening settles softly around the quiet house.",
+      "reference_seconds": 2.18,
+      "output": "samples/nfe8-cfg2.0-female-short-4s-iter-01.wav",
+      "generation_seconds": 1.4523882910143584,
+      "rtf": 0.36406792054170084,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "samples": 95744,
+        "duration_seconds": 3.989333333333333,
+        "peak": 1.0,
+        "rms": 0.183357872648122,
+        "clipped_samples": 28
+      },
+      "memory": {
+        "peak_rss_bytes": 3983392768,
+        "mps_current_allocated_bytes": 1419714816,
+        "mps_driver_allocated_bytes": 2351759360
+      }
+    },
+    {
+      "variant": "nfe8-cfg2.0",
+      "nfe_step": 8,
+      "cfg_strength": 2.0,
+      "voice": "female",
+      "profile": "medium-8s",
+      "iteration": 1,
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "reference_seconds": 2.18,
+      "output": "samples/nfe8-cfg2.0-female-medium-8s-iter-01.wav",
+      "generation_seconds": 1.552366541000083,
+      "rtf": 0.19430489081276073,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "samples": 191744,
+        "duration_seconds": 7.989333333333334,
+        "peak": 1.0,
+        "rms": 0.19682124030456044,
+        "clipped_samples": 16
+      },
+      "memory": {
+        "peak_rss_bytes": 3983392768,
+        "mps_current_allocated_bytes": 1419714816,
+        "mps_driver_allocated_bytes": 2351874048
+      }
+    },
+    {
+      "variant": "nfe8-cfg2.0",
+      "nfe_step": 8,
+      "cfg_strength": 2.0,
+      "voice": "female",
+      "profile": "long-12s",
+      "iteration": 1,
+      "expected_text": "Take a slow breath and let the noise of the day disappear. The fire glows beside you, the night is calm, and there is nowhere else you need to be.",
+      "reference_seconds": 2.18,
+      "output": "samples/nfe8-cfg2.0-female-long-12s-iter-01.wav",
+      "generation_seconds": 2.2585130000079516,
+      "rtf": 0.18837686276756715,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "samples": 287744,
+        "duration_seconds": 11.989333333333333,
+        "peak": 1.0,
+        "rms": 0.1727824170845372,
+        "clipped_samples": 65
+      },
+      "memory": {
+        "peak_rss_bytes": 3983392768,
+        "mps_current_allocated_bytes": 1419714816,
+        "mps_driver_allocated_bytes": 2362490880
+      }
+    },
+    {
+      "variant": "nfe8-cfg2.0",
+      "nfe_step": 8,
+      "cfg_strength": 2.0,
+      "voice": "male",
+      "profile": "short-4s",
+      "iteration": 1,
+      "expected_text": "The evening settles softly around the quiet house.",
+      "reference_seconds": 2.82,
+      "output": "samples/nfe8-cfg2.0-male-short-4s-iter-01.wav",
+      "generation_seconds": 1.1791900419921149,
+      "rtf": 0.29323359797549275,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "samples": 96512,
+        "duration_seconds": 4.021333333333334,
+        "peak": 0.60662841796875,
+        "rms": 0.07011492815841147,
+        "clipped_samples": 0
+      },
+      "memory": {
+        "peak_rss_bytes": 3983392768,
+        "mps_current_allocated_bytes": 1419714816,
+        "mps_driver_allocated_bytes": 2371026944
+      }
+    },
+    {
+      "variant": "nfe8-cfg2.0",
+      "nfe_step": 8,
+      "cfg_strength": 2.0,
+      "voice": "male",
+      "profile": "medium-8s",
+      "iteration": 1,
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "reference_seconds": 2.82,
+      "output": "samples/nfe8-cfg2.0-male-medium-8s-iter-01.wav",
+      "generation_seconds": 1.6498239579959773,
+      "rtf": 0.20567951604005702,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "samples": 192512,
+        "duration_seconds": 8.021333333333333,
+        "peak": 0.470367431640625,
+        "rms": 0.06465148655809519,
+        "clipped_samples": 0
+      },
+      "memory": {
+        "peak_rss_bytes": 3983392768,
+        "mps_current_allocated_bytes": 1419714816,
+        "mps_driver_allocated_bytes": 2371141632
+      }
+    },
+    {
+      "variant": "nfe8-cfg2.0",
+      "nfe_step": 8,
+      "cfg_strength": 2.0,
+      "voice": "male",
+      "profile": "long-12s",
+      "iteration": 1,
+      "expected_text": "Take a slow breath and let the noise of the day disappear. The fire glows beside you, the night is calm, and there is nowhere else you need to be.",
+      "reference_seconds": 2.82,
+      "output": "samples/nfe8-cfg2.0-male-long-12s-iter-01.wav",
+      "generation_seconds": 2.566488415992353,
+      "rtf": 0.21349448890797082,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "samples": 288512,
+        "duration_seconds": 12.021333333333333,
+        "peak": 0.71728515625,
+        "rms": 0.07333602281626804,
+        "clipped_samples": 0
+      },
+      "memory": {
+        "peak_rss_bytes": 3983392768,
+        "mps_current_allocated_bytes": 1419714816,
+        "mps_driver_allocated_bytes": 2371256320
+      }
+    }
+  ],
+  "completed_at": "2026-08-13T15:15:13.551710+00:00"
+}

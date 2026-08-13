@@ -1,0 +1,120 @@
+{
+  "speaker_model": "microsoft/wavlm-base-plus-sv",
+  "summary": {
+    "samples": 6,
+    "mean_wer": 0.0,
+    "exact_transcripts": 6,
+    "mean_speaker_cosine_similarity": 0.9395800729592642,
+    "unclipped_samples": 3
+  },
+  "samples": [
+    {
+      "voice": "female",
+      "profile": "short-4s",
+      "sample": "validation-runs/20260813T151459Z-pytorch-nfe8-cfg2-validation-mps/samples/nfe8-cfg2.0-female-short-4s-iter-01.wav",
+      "transcript": "The evening settles softly around the quiet house.",
+      "word_errors": 0,
+      "word_count": 8,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9412136673927307,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 3.989333333333333,
+        "peak": 1.0,
+        "rms": 0.183357872648122,
+        "clipped_samples": 28
+      }
+    },
+    {
+      "voice": "female",
+      "profile": "medium-8s",
+      "sample": "validation-runs/20260813T151459Z-pytorch-nfe8-cfg2-validation-mps/samples/nfe8-cfg2.0-female-medium-8s-iter-01.wav",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9376821517944336,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 7.989333333333334,
+        "peak": 1.0,
+        "rms": 0.19682124030456044,
+        "clipped_samples": 16
+      }
+    },
+    {
+      "voice": "female",
+      "profile": "long-12s",
+      "sample": "validation-runs/20260813T151459Z-pytorch-nfe8-cfg2-validation-mps/samples/nfe8-cfg2.0-female-long-12s-iter-01.wav",
+      "transcript": "Take a slow breath and let the noise of the day disappear.\nThe fire glows beside you, the night is calm, and there is nowhere else you need to be.",
+      "word_errors": 0,
+      "word_count": 30,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9427123665809631,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 11.989333333333333,
+        "peak": 1.0,
+        "rms": 0.1727824170845372,
+        "clipped_samples": 65
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "short-4s",
+      "sample": "validation-runs/20260813T151459Z-pytorch-nfe8-cfg2-validation-mps/samples/nfe8-cfg2.0-male-short-4s-iter-01.wav",
+      "transcript": "The evening settles softly around the quiet house.",
+      "word_errors": 0,
+      "word_count": 8,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9187159538269043,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 4.021333333333334,
+        "peak": 0.60662841796875,
+        "rms": 0.07011492815841147,
+        "clipped_samples": 0
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "medium-8s",
+      "sample": "validation-runs/20260813T151459Z-pytorch-nfe8-cfg2-validation-mps/samples/nfe8-cfg2.0-male-medium-8s-iter-01.wav",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9578838348388672,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 8.021333333333333,
+        "peak": 0.470367431640625,
+        "rms": 0.06465148655809519,
+        "clipped_samples": 0
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "long-12s",
+      "sample": "validation-runs/20260813T151459Z-pytorch-nfe8-cfg2-validation-mps/samples/nfe8-cfg2.0-male-long-12s-iter-01.wav",
+      "transcript": "take a slow breath and let the noise of the day disappear the fire glows beside you the night is calm and there is nowhere else you need to be",
+      "word_errors": 0,
+      "word_count": 30,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9392724633216858,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 12.021333333333333,
+        "peak": 0.71728515625,
+        "rms": 0.07333602281626804,
+        "clipped_samples": 0
+      }
+    }
+  ]
+}
