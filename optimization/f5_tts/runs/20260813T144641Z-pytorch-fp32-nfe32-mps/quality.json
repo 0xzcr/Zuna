@@ -1,0 +1,115 @@
+{
+  "speaker_model": "microsoft/wavlm-base-plus-sv",
+  "iteration_scored": 2,
+  "summary": {
+    "samples": 6,
+    "mean_wer": 0.0,
+    "exact_transcripts": 6,
+    "mean_speaker_cosine_similarity": 0.9450891415278116,
+    "audio_integrity_passes": 4
+  },
+  "samples": [
+    {
+      "voice": "female",
+      "profile": "short-4s",
+      "sample": "samples/female-short-4s-iter-02.wav",
+      "expected_text": "The evening settles softly around the quiet house.",
+      "transcript": "The evening settles softly around the quiet house.",
+      "word_errors": 0,
+      "word_count": 8,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9713999032974243,
+      "audio_integrity": {
+        "sample_rate_24000": true,
+        "mono": true,
+        "non_silent": true,
+        "unclipped": true
+      }
+    },
+    {
+      "voice": "female",
+      "profile": "medium-8s",
+      "sample": "samples/female-medium-8s-iter-02.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9239237308502197,
+      "audio_integrity": {
+        "sample_rate_24000": true,
+        "mono": true,
+        "non_silent": true,
+        "unclipped": false
+      }
+    },
+    {
+      "voice": "female",
+      "profile": "long-12s",
+      "sample": "samples/female-long-12s-iter-02.wav",
+      "expected_text": "Take a slow breath and let the noise of the day disappear. The fire glows beside you, the night is calm, and there is nowhere else you need to be.",
+      "transcript": "Take a slow breath, and let the noise of the day disappear.\nThe fire glows beside you, the night is calm, and there is nowhere else you need to be.",
+      "word_errors": 0,
+      "word_count": 30,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9495969414710999,
+      "audio_integrity": {
+        "sample_rate_24000": true,
+        "mono": true,
+        "non_silent": true,
+        "unclipped": false
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "short-4s",
+      "sample": "samples/male-short-4s-iter-02.wav",
+      "expected_text": "The evening settles softly around the quiet house.",
+      "transcript": "The evening settles softly around the quiet house.",
+      "word_errors": 0,
+      "word_count": 8,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9188182353973389,
+      "audio_integrity": {
+        "sample_rate_24000": true,
+        "mono": true,
+        "non_silent": true,
+        "unclipped": true
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "medium-8s",
+      "sample": "samples/male-medium-8s-iter-02.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9626361131668091,
+      "audio_integrity": {
+        "sample_rate_24000": true,
+        "mono": true,
+        "non_silent": true,
+        "unclipped": true
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "long-12s",
+      "sample": "samples/male-long-12s-iter-02.wav",
+      "expected_text": "Take a slow breath and let the noise of the day disappear. The fire glows beside you, the night is calm, and there is nowhere else you need to be.",
+      "transcript": "take a slow breath and let the noise of the day disappear the fire glows beside you the night is calm and there is nowhere else you need to be",
+      "word_errors": 0,
+      "word_count": 30,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9441599249839783,
+      "audio_integrity": {
+        "sample_rate_24000": true,
+        "mono": true,
+        "non_silent": true,
+        "unclipped": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "run_id": "20260813T144641Z-pytorch-fp32-nfe32-mps",
+  "created_at": "2026-08-13T14:46:41.840514+00:00",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "python": "3.13.3 (v3.13.3:6280bb54784, Apr  8 2025, 10:47:54) [Clang 15.0.0 (clang-1500.3.9.4)]",
+  "torch": "2.13.0",
+  "device": "mps",
+  "mps_available": true,
+  "zuna_git_revision": "9b576a8d8ffbdcebce448ba9805306b9a9181b0f",
+  "f5_tts_git_revision": "168aa7d3231295980454b83b1872140cc0016ac5",
+  "checkpoint": "/Users/umangsharma/Desktop/F5-TTS/ckpts/zuna_dual_voice_v3/zuna_dual_voice_final.safetensors",
+  "checkpoint_bytes": 1348435761,
+  "checkpoint_sha256": "5a9bdbde8a42bfb069cd1533f5e3606839db3f40e3de04c5e3d16a345d6ca863"
+}
