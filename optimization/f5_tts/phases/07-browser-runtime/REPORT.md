@@ -16,9 +16,11 @@ maximum of 10 storage buffers per shader while ONNX Runtime Web's generated F5 G
 shader requires 11. FP32 has the same limit. The runtime now checks this adapter limit
 before loading and selects WASM rather than crashing.
 
-The complete 4-second WASM fallback run passed in 100.954 seconds. Its transcription was
-exact, WavLM speaker cosine was 0.948, and it had no clipped samples. This is functional
-and quality-safe, but it is not fast enough for the intended product.
+The complete 4-second single-thread WASM fallback run passed in 100.954 seconds. Its
+transcription was exact, WavLM speaker cosine was 0.948, and it had no clipped samples.
+With the deployment's cross-origin isolation headers enabled, threaded WASM completed the
+same run in 30.124 seconds with the same 192,556-byte output. This is the deployment
+baseline for Apple/Chrome until a WebGPU graph compatible with the adapter limit is built.
 
 ## sherpa-onnx boundary
 

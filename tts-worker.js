@@ -43,7 +43,7 @@ async function processQueue() {
           speed: request.speed,
         });
         const wav = audio.toWav();
-        self.postMessage({ type: 'audio', requestId: request.requestId, wav }, [wav]);
+        self.postMessage({ type: 'audio', requestId: request.requestId, prefetch: request.prefetch === true, wav }, [wav]);
       } catch (error) {
         self.postMessage({ type: 'error', requestId: request.requestId, message: error?.message || String(error) });
       }

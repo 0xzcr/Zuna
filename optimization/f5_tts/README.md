@@ -2,6 +2,20 @@
 
 This directory is the reproducible record for optimizing the dual-voice Zuna checkpoint.
 
+## Selected configuration
+
+- one dual-voice F5 checkpoint; no model distillation
+- compact female and male prompts loaded into one persistent runtime
+- FP16 transformer with FP32 preprocess/decode graphs
+- NFE 8, CFG 2, sway -1
+- attenuation-only -1 dBFS output ceiling
+- ONNX Runtime Web: WebGPU when the adapter supports the required 11 storage buffers,
+  otherwise quality-safe WASM
+- progressive eight-page PDF extraction and queued audio scheduling
+
+Weight-only 8-bit and 4-bit exports are retained only as rejected experiments because
+they destroyed intelligibility and speaker identity.
+
 ## Layout
 
 ```text
@@ -14,6 +28,8 @@ runs/<run-id>/           Immutable output from one benchmark run
   benchmark.log          Complete console log
   samples/               Generated WAV files
   asr/                   Whisper transcripts
+phases/                  Reports, manifests, logs, samples, and quality decisions
+browser/                 Browser runtime, worker, scheduling, and smoke harnesses
 ```
 
 ## Baseline
@@ -39,4 +55,3 @@ speaker similarity, and audio integrity with:
   --run "$(cat optimization/f5_tts/latest-run.txt)" \
   --f5-root /Users/umangsharma/Desktop/F5-TTS
 ```
-

@@ -10,3 +10,6 @@ playback boundary when inference stays ahead of listening. Voice selection itsel
 synchronous and covered by tests. A newly selected passage still has to be synthesized;
 with the measured Apple/Chrome WASM fallback this generation time remains the limiting
 factor and cannot truthfully be described as an instant first sample.
+
+The product player also prefetches the next passage while the current audio is playing,
+so the normal passage boundary is no longer forced to wait for a fresh model request.

@@ -21,5 +21,12 @@
     "wer": 0,
     "speaker_cosine_similarity": 0.9481403827667236,
     "clipped_samples": 0
+  },
+  "wasm_threaded_inference": {
+    "status": "pass",
+    "cross_origin_isolated": true,
+    "target_audio_seconds": 4,
+    "wall_seconds_including_session_load": 30.12398,
+    "wav_bytes": 192556
   }
 }

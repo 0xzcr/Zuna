@@ -27,6 +27,9 @@ let currentAudioUrl;
 let localModelFailed = false;
 let generationTimer;
 let extractionId = 0;
+let prefetchRequest = 0;
+let prefetching = false;
+let prefetched;
 
 function notify(message) {
   toast.textContent = message;
@@ -100,6 +103,9 @@ function setEngineNote(message) {
 function stopAudio() {
   window.speechSynthesis?.cancel();
   activeRequest += 1;
+  prefetchRequest += 1;
+  prefetching = false;
+  prefetched = undefined;
   ttsWorker?.postMessage({ type: 'cancel' });
   clearTimeout(generationTimer);
   if (currentAudio) {
@@ -135,7 +141,7 @@ function playAudioBlob(blob, engineMessage) {
   currentAudioUrl = URL.createObjectURL(blob);
   currentAudio = new Audio(currentAudioUrl);
   currentAudio.playbackRate = state.speed;
-  currentAudio.onplay = () => { state.speaking = true; playButton.textContent = 'Ⅱ'; };
+  currentAudio.onplay = () => { state.speaking = true; playButton.textContent = 'Ⅱ'; prefetchNext(); };
   currentAudio.onpause = () => { if (!currentAudio.ended) { state.speaking = false; playButton.textContent = '▶'; } };
   currentAudio.onerror = () => { state.speaking = false; playButton.textContent = '▶'; notify('The local narrator could not play this passage.'); };
   currentAudio.onended = () => {
@@ -144,12 +150,29 @@ function playAudioBlob(blob, engineMessage) {
     if (state.index < state.passages.length - 1) {
       state.index += 1;
       renderPassage();
-      speakCurrent();
+      const cached = prefetched;
+      if (cached && cached.index === state.index && cached.narrator === state.narrator && cached.speed === state.speed) {
+        prefetched = undefined;
+        playAudioBlob(cached.blob, 'Local narrator · next passage was prepared ahead of time');
+      } else speakCurrent();
     } else notify('You reached the end of this document.');
   };
   currentAudio.play().catch((error) => {
     console.error('Audio playback error:', error);
     notify('Click play again to start the narrator.');
+  });
+}
+
+function prefetchNext() {
+  const worker = ensureTtsWorker();
+  const next = state.passages[state.index + 1];
+  if (!worker || !next || prefetching || (prefetched && prefetched.index === state.index + 1)) return;
+  const requestId = ++prefetchRequest;
+  prefetching = true;
+  worker.postMessage({
+    type: 'speak', requestId, prefetch: true, text: next,
+    voice: narratorProfiles[state.narrator].kokoro,
+    speed: state.speed * narratorProfiles[state.narrator].kokoroSpeed,
   });
 }
 
@@ -196,6 +219,7 @@ function ensureTtsWorker() {
       return;
     }
     if (data.type === 'error') {
+      if (data.prefetch) { if (data.requestId === prefetchRequest) prefetching = false; return; }
       if (data.requestId !== activeRequest) return;
       clearTimeout(generationTimer);
       console.error('Local narrator error:', data.message);
@@ -207,7 +231,14 @@ function ensureTtsWorker() {
       if (state.passages.length) speakWithBrowser();
       return;
     }
-    if (data.type !== 'audio' || data.requestId !== activeRequest) return;
+    if (data.type !== 'audio') return;
+    if (data.prefetch) {
+      if (data.requestId !== prefetchRequest) return;
+      prefetching = false;
+      prefetched = { index: state.index + 1, narrator: state.narrator, speed: state.speed, blob: new Blob([data.wav], { type: 'audio/wav' }) };
+      return;
+    }
+    if (data.requestId !== activeRequest) return;
 
     clearTimeout(generationTimer);
     playAudioBlob(new Blob([data.wav], { type: 'audio/wav' }), 'Local Kokoro narrator · model cached on this device');
@@ -231,7 +262,12 @@ function speakWithLocalModel() {
     speakWithBrowser();
     return;
   }
+  const cached = prefetched && prefetched.index === state.index && prefetched.narrator === state.narrator && prefetched.speed === state.speed ? prefetched : undefined;
   stopAudio();
+  if (cached) {
+    playAudioBlob(cached.blob, 'Local narrator · passage was prepared ahead of time');
+    return;
+  }
   state.generating = true;
   playButton.textContent = '…';
   setEngineNote('Preparing your local narrator…');

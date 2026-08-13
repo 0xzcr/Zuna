@@ -4,6 +4,7 @@ import { F5_MODEL } from './model-config.mjs';
 import { NarrationQueue } from './narration-queue.mjs';
 
 ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/';
+// Vercel sends COOP/COEP so this enables the threaded WASM path there.
 ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 1);
 ort.env.webgpu.powerPreference = 'high-performance';
 const runtime = new F5Runtime(ort, F5_MODEL);

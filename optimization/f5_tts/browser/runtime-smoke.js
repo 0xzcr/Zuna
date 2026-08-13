@@ -1,5 +1,5 @@
 import * as ort from '../../../node_modules/onnxruntime-web/dist/ort.webgpu.min.mjs';
-import { F5Runtime } from './f5-runtime.mjs?v=9';
+import { F5Runtime } from './f5-runtime.mjs';
 
 ort.env.wasm.wasmPaths = '../../../node_modules/onnxruntime-web/dist/';
 ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 1);
@@ -11,11 +11,6 @@ const config = {
     male: { audio: '../assets/voice-prompts/male.wav', text: 'the words on the page came alive. ' },
   },
 };
-if (new URLSearchParams(location.search).has('fp32')) {
-  config.baseUrl = '../../../.local/models/fp32-nfe32';
-  config.transformerProvider = 'webgpu';
-  config.forceCpuNodeNames = ['/f5_transformer/input_embed/proj/MatMul', '/f5_transformer/input_embed/proj/Add'];
-}
 
 try {
   const runtime = new F5Runtime(ort, config);

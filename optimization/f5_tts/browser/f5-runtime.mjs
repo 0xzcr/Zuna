@@ -50,13 +50,12 @@ export class F5Runtime {
       const options = (providers) => ({ executionProviders: providers, graphOptimizationLevel: 'all' });
       progress('models');
       const adapter = await globalThis.navigator?.gpu?.requestAdapter?.({ powerPreference: 'high-performance' });
-      const transformerProvider = this.config.transformerProvider || (adapter?.limits.maxStorageBuffersPerShaderStage >= 11 ? 'webgpu' : 'wasm');
-      const transformerExecutionProvider = transformerProvider === 'webgpu' && this.config.forceCpuNodeNames
-        ? { name: 'webgpu', forceCpuNodeNames: this.config.forceCpuNodeNames }
-        : transformerProvider;
+      const transformerProvider = adapter?.limits.maxStorageBuffersPerShaderStage >= 11 ? 'webgpu' : 'wasm';
       // ORT Web initializes its shared WASM core lazily, so sessions must be created serially.
       // F5's Gemm shader needs 11 storage buffers; Apple/Chrome currently exposes only 10.
-      const transformer = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[1]}`, options([transformerExecutionProvider]));
+      const transformerOptions = options([transformerProvider]);
+      if (transformerProvider === 'webgpu') transformerOptions.preferredOutputLocation = 'gpu-buffer';
+      const transformer = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[1]}`, transformerOptions);
       const preprocess = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[0]}`, options(['wasm']));
       const decode = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[2]}`, options(['wasm']));
       const [vocabText, ...voiceBuffers] = await Promise.all([
@@ -88,24 +87,32 @@ export class F5Runtime {
     const maxDuration = Math.max(ids.length + 1, refFrames + 2, duration);
     if (maxDuration > this.config.maxSignalLength) throw new Error('Passage exceeds the exported F5 signal length.');
     progress('preprocess');
-    const prepared = await this.sessions.preprocess.run({
+    const preprocessInputs = {
       audio: new this.ort.Tensor('float32', audio, [1, 1, audio.length]),
       text_ids: new this.ort.Tensor('int32', ids, [1, ids.length]),
       max_duration: new this.ort.Tensor('int64', BigInt64Array.of(BigInt(maxDuration)), [1]),
-    });
+    };
+    const prepared = await this.sessions.preprocess.run(preprocessInputs);
+    Object.values(preprocessInputs).forEach((tensor) => tensor.dispose?.());
     let noise = prepared.noise;
     const constants = Object.fromEntries(['rope_cos', 'rope_sin', 'cat_mel_text', 'cat_mel_text_drop'].map((name) => [name, prepared[name]]));
     for (let step = 0; step < this.config.nfeSteps; step += 1) {
       progress('transformer', step + 1, this.config.nfeSteps);
-      const result = await this.sessions.transformer.run({ ...constants, noise, time_step: new this.ort.Tensor('int32', Int32Array.of(step), [1]) });
+      const timeStep = new this.ort.Tensor('int32', Int32Array.of(step), [1]);
+      const result = await this.sessions.transformer.run({ ...constants, noise, time_step: timeStep });
+      timeStep.dispose?.();
       if (noise !== prepared.noise) noise.dispose?.();
       noise = result.denoised;
     }
     progress('decode');
-    const result = await this.sessions.decode.run({ denoised: noise, ref_signal_len: prepared.ref_signal_len, rms_scale: prepared.rms_scale, ref_mel_tail: prepared.ref_mel_tail });
+    const decodeNoise = this.transformerProvider === 'webgpu'
+      ? new this.ort.Tensor('float16', await noise.getData(), noise.dims)
+      : noise;
+    const result = await this.sessions.decode.run({ denoised: decodeNoise, ref_signal_len: prepared.ref_signal_len, rms_scale: prepared.rms_scale, ref_mel_tail: prepared.ref_mel_tail });
     const samples = Float32Array.from(await result.output_audio.getData());
     Object.values(prepared).forEach((tensor) => tensor.dispose?.());
-    noise.dispose?.(); result.output_audio.dispose?.();
+    if (decodeNoise !== noise) { decodeNoise.dispose?.(); noise.dispose?.(); } else noise.dispose?.();
+    result.output_audio.dispose?.();
     return wav(peakNormalize(samples).samples, this.config.sampleRate);
   }
 }
