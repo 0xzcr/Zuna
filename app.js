@@ -1,3 +1,5 @@
+import { processPagesInBatches } from './progressive-pages.mjs';
+
 const state = {
   passages: [],
   index: 0,
@@ -24,6 +26,7 @@ let currentAudio;
 let currentAudioUrl;
 let localModelFailed = false;
 let generationTimer;
+let extractionId = 0;
 
 function notify(message) {
   toast.textContent = message;
@@ -62,6 +65,12 @@ function setDocument(text, name) {
   renderPassage();
   document.querySelector('.voice-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   notify(`${state.passages.length} passages ready to listen.`);
+}
+
+function appendDocument(text, page, pageCount) {
+  state.passages.push(...splitIntoPassages(cleanText(text)));
+  $('#fileMeta').textContent = `${state.passages.length} passages · reading page ${page} / ${pageCount} · local only`;
+  seek.max = Math.max(0, state.passages.length - 1);
 }
 
 function renderPassage() {
@@ -269,22 +278,31 @@ function togglePlayback() {
 }
 
 async function extractPdf(file) {
+  const currentExtraction = ++extractionId;
   notify('Reading your book locally…');
   const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');
   pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
   const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-  const pages = [];
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+  let firstBatch = true;
+  await processPagesInBatches(document.numPages, async (pageNumber) => {
     const page = await document.getPage(pageNumber);
     const content = await page.getTextContent();
-    pages.push(content.items.map((item) => item.str).join(' '));
-  }
-  setDocument(pages.join('\n'), file.name);
+    return content.items.map((item) => item.str).join(' ');
+  }, (pages, pageNumber, pageCount) => {
+    if (currentExtraction !== extractionId) return false;
+    if (firstBatch) {
+      firstBatch = false;
+      setDocument(pages.join('\n'), file.name);
+    } else appendDocument(pages.join('\n'), pageNumber, pageCount);
+    $('#fileMeta').textContent = `${state.passages.length} passages · reading page ${pageNumber} / ${pageCount} · local only`;
+    if (pageNumber === pageCount) notify(`${state.passages.length} passages ready to listen.`);
+    return true;
+  });
 }
 
 async function handleFile(file) {
   if (!file) return;
-  if (file.type === 'text/plain' || file.name.endsWith('.txt')) setDocument(await file.text(), file.name);
+  if (file.type === 'text/plain' || file.name.endsWith('.txt')) { extractionId += 1; setDocument(await file.text(), file.name); }
   else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
     try { await extractPdf(file); } catch (error) { console.error(error); notify('I could not read that book. Try a readable file.'); }
   } else notify('Please choose a readable book file (PDF or TXT).');
