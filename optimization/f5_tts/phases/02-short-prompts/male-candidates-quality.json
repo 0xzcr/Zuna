@@ -1,0 +1,66 @@
+{
+  "speaker_model": "microsoft/wavlm-base-plus-sv",
+  "summary": {
+    "samples": 3,
+    "mean_wer": 0.0,
+    "exact_transcripts": 3,
+    "mean_speaker_cosine_similarity": 0.9415420889854431,
+    "unclipped_samples": 3
+  },
+  "samples": [
+    {
+      "voice": "male",
+      "profile": "prompt-0010",
+      "sample": "candidate-runs/20260813T150757Z-pytorch-male-prompt-candidates-nfe32-mps/samples/male-0010-medium-8s-iter-01.wav",
+      "transcript": "beyond the window gentle rain moves through the trees while the warm room becomes peaceful and still",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9301159381866455,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 8.032,
+        "peak": 0.76116943359375,
+        "rms": 0.06668444533075303,
+        "clipped_samples": 0
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "prompt-0009",
+      "sample": "candidate-runs/20260813T150757Z-pytorch-male-prompt-candidates-nfe32-mps/samples/male-0009-medium-8s-iter-01.wav",
+      "transcript": "beyond the window gentle rain moves through the trees while the warm room becomes peaceful and still",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9338148832321167,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 7.978666666666666,
+        "peak": 0.591461181640625,
+        "rms": 0.07941036392606104,
+        "clipped_samples": 0
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "prompt-0024",
+      "sample": "candidate-runs/20260813T150757Z-pytorch-male-prompt-candidates-nfe32-mps/samples/male-0024-medium-8s-iter-01.wav",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9606954455375671,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 8.021333333333333,
+        "peak": 0.362152099609375,
+        "rms": 0.05802502986808483,
+        "clipped_samples": 0
+      }
+    }
+  ]
+}

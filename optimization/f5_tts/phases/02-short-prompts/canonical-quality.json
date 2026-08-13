@@ -1,0 +1,48 @@
+{
+  "speaker_model": "microsoft/wavlm-base-plus-sv",
+  "summary": {
+    "samples": 2,
+    "mean_wer": 0.0,
+    "exact_transcripts": 2,
+    "mean_speaker_cosine_similarity": 0.8762898445129395,
+    "unclipped_samples": 2
+  },
+  "samples": [
+    {
+      "voice": "female",
+      "profile": "medium-8s-short-prompt",
+      "sample": "runs/20260813T150515Z-pytorch-short-prompts-nfe32-mps/samples/female-medium-8s-iter-02.wav",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.956368088722229,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 7.989333333333334,
+        "peak": 0.9019775390625,
+        "rms": 0.15288317926949727,
+        "clipped_samples": 0
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "medium-8s-short-prompt",
+      "sample": "runs/20260813T150515Z-pytorch-short-prompts-nfe32-mps/samples/male-medium-8s-iter-02.wav",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.7962116003036499,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 8.010666666666667,
+        "peak": 0.572021484375,
+        "rms": 0.06634702153045344,
+        "clipped_samples": 0
+      }
+    }
+  ]
+}

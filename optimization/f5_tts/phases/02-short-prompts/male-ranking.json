@@ -1,0 +1,79 @@
+{
+  "speaker_model": "microsoft/wavlm-base-plus-sv",
+  "canonical": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0001.wav",
+  "max_seconds": 3.5,
+  "candidates": [
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0010.wav",
+      "text": "to be safe in the knowledge",
+      "duration_seconds": 2.32,
+      "canonical_speaker_cosine_similarity": 0.9330475330352783
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0009.wav",
+      "text": "you are safe.",
+      "duration_seconds": 2.16,
+      "canonical_speaker_cosine_similarity": 0.9253836870193481
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0024.wav",
+      "text": "the words on the page came alive.",
+      "duration_seconds": 2.82,
+      "canonical_speaker_cosine_similarity": 0.9229028820991516
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0011.wav",
+      "text": "it is always within you.",
+      "duration_seconds": 2.28,
+      "canonical_speaker_cosine_similarity": 0.9180489182472229
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0019.wav",
+      "text": "his coat buttoned high",
+      "duration_seconds": 1.9,
+      "canonical_speaker_cosine_similarity": 0.9042818546295166
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0014.wav",
+      "text": "a little gratitude now.",
+      "duration_seconds": 1.94,
+      "canonical_speaker_cosine_similarity": 0.9037142992019653
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0023.wav",
+      "text": "after a simple breakfast.",
+      "duration_seconds": 2.78,
+      "canonical_speaker_cosine_similarity": 0.8925801515579224
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0021.wav",
+      "text": "dog had such youth.",
+      "duration_seconds": 2.16,
+      "canonical_speaker_cosine_similarity": 0.8872636556625366
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0022.wav",
+      "text": "the man was falling asleep.",
+      "duration_seconds": 2.26,
+      "canonical_speaker_cosine_similarity": 0.8812735080718994
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0013.wav",
+      "text": "more letting go now.",
+      "duration_seconds": 1.88,
+      "canonical_speaker_cosine_similarity": 0.8769466876983643
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0012.wav",
+      "text": "and whatever thoughts you might have",
+      "duration_seconds": 2.88,
+      "canonical_speaker_cosine_similarity": 0.8623082637786865
+    },
+    {
+      "audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0016.wav",
+      "text": "beautiful, big, old apartment.",
+      "duration_seconds": 2.58,
+      "canonical_speaker_cosine_similarity": 0.8466751575469971
+    }
+  ]
+}

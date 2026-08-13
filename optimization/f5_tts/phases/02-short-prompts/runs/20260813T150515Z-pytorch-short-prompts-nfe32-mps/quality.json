@@ -1,0 +1,47 @@
+{
+  "speaker_model": "microsoft/wavlm-base-plus-sv",
+  "iteration_scored": 2,
+  "summary": {
+    "samples": 2,
+    "mean_wer": 0.0,
+    "exact_transcripts": 2,
+    "mean_speaker_cosine_similarity": 0.9328605532646179,
+    "audio_integrity_passes": 2
+  },
+  "samples": [
+    {
+      "voice": "female",
+      "profile": "medium-8s",
+      "sample": "samples/female-medium-8s-iter-02.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.97242671251297,
+      "audio_integrity": {
+        "sample_rate_24000": true,
+        "mono": true,
+        "non_silent": true,
+        "unclipped": true
+      }
+    },
+    {
+      "voice": "male",
+      "profile": "medium-8s",
+      "sample": "samples/male-medium-8s-iter-02.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "word_errors": 0,
+      "word_count": 17,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.8932943940162659,
+      "audio_integrity": {
+        "sample_rate_24000": true,
+        "mono": true,
+        "non_silent": true,
+        "unclipped": true
+      }
+    }
+  ]
+}

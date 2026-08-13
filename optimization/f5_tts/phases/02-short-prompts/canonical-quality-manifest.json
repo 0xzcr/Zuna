@@ -1,0 +1,20 @@
+{
+  "samples": [
+    {
+      "voice": "female",
+      "profile": "medium-8s-short-prompt",
+      "sample": "runs/20260813T150515Z-pytorch-short-prompts-nfe32-mps/samples/female-medium-8s-iter-02.wav",
+      "reference_audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_female_aligned_source/wavs/clip_0001.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "runs/20260813T150515Z-pytorch-short-prompts-nfe32-mps/asr/female-medium-8s-iter-02.txt"
+    },
+    {
+      "voice": "male",
+      "profile": "medium-8s-short-prompt",
+      "sample": "runs/20260813T150515Z-pytorch-short-prompts-nfe32-mps/samples/male-medium-8s-iter-02.wav",
+      "reference_audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0001.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees while the warm room becomes peaceful and still.",
+      "transcript": "runs/20260813T150515Z-pytorch-short-prompts-nfe32-mps/asr/male-medium-8s-iter-02.txt"
+    }
+  ]
+}
