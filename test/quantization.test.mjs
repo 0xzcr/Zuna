@@ -6,6 +6,7 @@ import { TTS_MODEL, TTS_OPTIONS } from '../tts-config.mjs';
 test('uses the validated F5 model in the browser runtime', () => {
   assert.equal(TTS_MODEL.baseUrl, '/models/f5/fp16-nfe8');
   assert.equal(TTS_MODEL.nfeSteps, 8);
+  assert.equal(TTS_MODEL.transformerParts.length, 8);
   assert.deepEqual(TTS_OPTIONS, { runtime: 'onnxruntime-web', nfeSteps: 8, output: 'pcm16-wav' });
 });
 

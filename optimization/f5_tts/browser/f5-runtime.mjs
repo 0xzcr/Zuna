@@ -44,6 +44,18 @@ export class F5Runtime {
     this.fetch = fetcher;
   }
 
+  async loadModel(file, parts = []) {
+    if (!parts.length) return `${this.config.baseUrl}/${file}`;
+    const buffers = await Promise.all(parts.map((part) => this.fetch(`${this.config.baseUrl}/${part}`).then((response) => {
+      if (!response.ok) throw new Error(`Could not load model part ${part} (${response.status}).`);
+      return response.arrayBuffer();
+    })));
+    const model = new Uint8Array(buffers.reduce((total, buffer) => total + buffer.byteLength, 0));
+    let offset = 0;
+    buffers.forEach((buffer) => { model.set(new Uint8Array(buffer), offset); offset += buffer.byteLength; });
+    return model;
+  }
+
   async load(progress = () => {}) {
     if (this.ready) return this.ready;
     this.ready = (async () => {
@@ -55,7 +67,8 @@ export class F5Runtime {
       // F5's Gemm shader needs 11 storage buffers; Apple/Chrome currently exposes only 10.
       const transformerOptions = options([transformerProvider]);
       if (transformerProvider === 'webgpu') transformerOptions.preferredOutputLocation = 'gpu-buffer';
-      const transformer = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[1]}`, transformerOptions);
+      const transformerModel = await this.loadModel(FILES[1], this.config.transformerParts);
+      const transformer = await this.ort.InferenceSession.create(transformerModel, transformerOptions);
       const preprocess = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[0]}`, options(['wasm']));
       const decode = await this.ort.InferenceSession.create(`${this.config.baseUrl}/${FILES[2]}`, options(['wasm']));
       const [vocabText, ...voiceBuffers] = await Promise.all([

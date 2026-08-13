@@ -6,6 +6,8 @@ import json
 import shutil
 from pathlib import Path
 
+CHUNK_BYTES = 90 * 1024 * 1024
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -18,7 +20,14 @@ def main() -> None:
     target = args.output / "fp16-nfe8"
     target.mkdir(parents=True, exist_ok=True)
     for path in model.glob("*.onnx"):
-        shutil.copy2(path, target / path.name)
+        if path.name == "F5_Transformer.onnx":
+            with path.open("rb") as source:
+                index = 0
+                while chunk := source.read(CHUNK_BYTES):
+                    (target / f"{path.name}.part-{index:02d}.bin").write_bytes(chunk)
+                    index += 1
+        else:
+            shutil.copy2(path, target / path.name)
     shutil.copy2(args.vocab, target / "vocab.txt")
     prompts = args.output / "prompts"
     prompts.mkdir(parents=True, exist_ok=True)
