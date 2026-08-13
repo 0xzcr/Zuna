@@ -1,0 +1,21 @@
+[F5-TTS] Reading package metadata: /Users/umangsharma/Desktop/F5-TTS/ckpts/zuna_dual_voice_v3/onnx/fp16-nfe8/F5_Metadata.onnx
+[F5-TTS] Metadata ready: series=v0, input=24000 Hz,output=24000 Hz, hop_length=256, nfe_steps=8.
+[F5-TTS] Vocabulary ready: 2545 tokens.
+[F5-TTS] Loading ONNX graph 1/3: F5_Preprocess.onnx
+[F5-TTS] Loading ONNX graph 2/3: F5_Transformer.onnx
+[F5-TTS] ONNX Runtime providers: ['CPUExecutionProvider']
+[F5-TTS] Loading ONNX graph 3/3: F5_Decode.onnx
+[F5-TTS] Preparing reference audio: /Users/umangsharma/Desktop/F5-TTS/data/zuna_story_source/wavs/clip_0024.wav
+[F5-TTS] Running acoustic preprocessing...
+[F5-TTS] Running flow matching (8 steps)...
+[F5-TTS] Flow matching: 1/8 steps (1.79s elapsed)
+[F5-TTS] Flow matching: 2/8 steps (3.51s elapsed)
+[F5-TTS] Flow matching: 3/8 steps (5.22s elapsed)
+[F5-TTS] Flow matching: 4/8 steps (7.00s elapsed)
+[F5-TTS] Flow matching: 5/8 steps (8.80s elapsed)
+[F5-TTS] Flow matching: 6/8 steps (10.58s elapsed)
+[F5-TTS] Flow matching: 7/8 steps (12.49s elapsed)
+[F5-TTS] Flow matching: 8/8 steps (14.53s elapsed)
+[F5-TTS] Decoding waveform...
+[F5-TTS] Writing generated audio: /Users/umangsharma/.ao/data/worktrees/zuna/zuna-7/optimization/f5_tts/phases/04-fp16-webgpu/samples/male-medium-8s-fp16.wav
+[F5-TTS] Pipeline complete in 16.06s (inference 14.60s, audio 8.01s, RTF=1.822).
