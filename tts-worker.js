@@ -1,6 +1,6 @@
 import { KokoroTTS } from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js';
+import { TTS_MODEL_ID, TTS_OPTIONS } from './tts-config.mjs';
 
-const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 let narrator;
 let loading;
 let pendingRequest;
@@ -17,9 +17,8 @@ function reportProgress(progress) {
 async function loadNarrator() {
   if (narrator) return narrator;
   if (!loading) {
-    loading = KokoroTTS.from_pretrained(MODEL_ID, {
-      dtype: 'q8',
-      device: 'wasm',
+    loading = KokoroTTS.from_pretrained(TTS_MODEL_ID, {
+      ...TTS_OPTIONS,
       progress_callback: reportProgress,
     }).then((model) => {
       narrator = model;
