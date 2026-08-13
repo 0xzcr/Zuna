@@ -5,7 +5,7 @@
   "description": "A private, browser-local PDF narration companion.",
   "scripts": {
     "check": "node --check app.js && node --check tts-worker.js",
-    "test": "node --test test/quantization.test.mjs",
+    "test": "node --test",
     "dev": "python3 -m http.server 4173",
     "preview": "python3 -m http.server 4173"
   },
