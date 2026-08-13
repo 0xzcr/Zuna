@@ -68,13 +68,13 @@ export class F5Runtime {
   async load(progress = () => {}) {
     if (this.ready) return this.ready;
     this.ready = (async () => {
-      const options = (providers) => ({ executionProviders: providers, graphOptimizationLevel: 'all' });
+      const options = (providers, graphOptimizationLevel = 'all') => ({ executionProviders: providers, graphOptimizationLevel });
       progress('models');
       const adapter = await globalThis.navigator?.gpu?.requestAdapter?.({ powerPreference: 'high-performance' });
-      const transformerProvider = adapter?.limits.maxStorageBuffersPerShaderStage >= 11 ? 'webgpu' : 'wasm';
+      const transformerProvider = this.config.transformerProvider || (adapter?.limits.maxStorageBuffersPerShaderStage >= 11 ? 'webgpu' : 'wasm');
       // ORT Web initializes its shared WASM core lazily, so sessions must be created serially.
       // F5's Gemm shader needs 11 storage buffers; Apple/Chrome currently exposes only 10.
-      const transformerOptions = options([transformerProvider]);
+      const transformerOptions = options([transformerProvider], this.config.transformerGraphOptimizationLevel || (transformerProvider === 'webgpu' ? 'basic' : 'all'));
       if (transformerProvider === 'webgpu') transformerOptions.preferredOutputLocation = 'gpu-buffer';
       const transformerModel = await this.loadModel(FILES[1], this.config.transformerParts);
       const transformer = await this.ort.InferenceSession.create(transformerModel, transformerOptions);

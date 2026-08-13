@@ -4,7 +4,7 @@ import { F5_MODEL } from './optimization/f5_tts/browser/model-config.mjs';
 import { NarrationQueue } from './optimization/f5_tts/browser/narration-queue.mjs';
 
 ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/';
-ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 1);
+ort.env.wasm.numThreads = Math.min(8, navigator.hardwareConcurrency || 1);
 ort.env.webgpu.powerPreference = 'high-performance';
 
 const runtime = new F5Runtime(ort, F5_MODEL);

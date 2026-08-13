@@ -2,7 +2,7 @@ import * as ort from '../../../node_modules/onnxruntime-web/dist/ort.webgpu.min.
 import { F5Runtime } from './f5-runtime.mjs';
 
 ort.env.wasm.wasmPaths = '../../../node_modules/onnxruntime-web/dist/';
-ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 1);
+ort.env.wasm.numThreads = Math.min(8, navigator.hardwareConcurrency || 1);
 const log = document.querySelector('#log');
 const config = {
   baseUrl: '../../../.local/models/fp16-nfe8', sampleRate: 24000, hopLength: 256, nfeSteps: 8, maxSignalLength: 4096,
