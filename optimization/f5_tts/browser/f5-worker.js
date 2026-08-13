@@ -11,13 +11,14 @@ const runtime = new F5Runtime(ort, F5_MODEL);
 const queue = new NarrationQueue(runtime);
 
 self.onmessage = async ({ data }) => {
+  if (data?.type === 'cancel') return queue.cancel();
   if (data?.type === 'load') return runtime.load((stage) => self.postMessage({ type: 'progress', stage }));
-  if (data?.type !== 'generate') return;
+  if (data?.type !== 'generate' && data?.type !== 'speak') return;
   try {
     queue.setVoice(data.voice);
-    const wav = await queue.generate(data.text, data.targetSeconds);
-    self.postMessage({ type: 'audio', requestId: data.requestId, wav }, [wav]);
+    const wav = await queue.generate(data.text, data.targetSeconds, (stage, step, total) => self.postMessage({ type: 'progress', requestId: data.requestId, stage, step, total }));
+    self.postMessage({ type: 'audio', requestId: data.requestId, prefetch: data.prefetch === true, wav }, [wav]);
   } catch (error) {
-    self.postMessage({ type: 'error', requestId: data.requestId, message: error?.message || String(error) });
+    self.postMessage({ type: 'error', requestId: data.requestId, prefetch: data.prefetch === true, message: error?.message || String(error) });
   }
 };

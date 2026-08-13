@@ -3,15 +3,24 @@ export class NarrationQueue {
     this.runtime = runtime;
     this.voice = voice;
     this.tail = Promise.resolve();
+    this.generation = 0;
   }
 
   setVoice(voice) {
     this.voice = voice;
   }
 
-  generate(text, targetSeconds) {
+  cancel() {
+    this.generation += 1;
+  }
+
+  generate(text, targetSeconds, progress) {
     const voice = this.voice;
-    const job = this.tail.then(() => this.runtime.generate(text, voice, targetSeconds));
+    const generation = this.generation;
+    const job = this.tail.then(() => {
+      if (generation !== this.generation) throw new Error('Narration request cancelled.');
+      return this.runtime.generate(text, voice, targetSeconds, progress);
+    });
     this.tail = job.catch(() => {});
     return job;
   }

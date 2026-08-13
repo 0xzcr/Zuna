@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { TTS_MODEL_ID, TTS_OPTIONS } from '../tts-config.mjs';
+import { TTS_MODEL, TTS_OPTIONS } from '../tts-config.mjs';
 
-test('uses the quantized Kokoro model in the WASM runtime', () => {
-  assert.equal(TTS_MODEL_ID, 'onnx-community/Kokoro-82M-v1.0-ONNX');
-  assert.deepEqual(TTS_OPTIONS, { dtype: 'q8', device: 'wasm' });
+test('uses the validated F5 model in the browser runtime', () => {
+  assert.equal(TTS_MODEL.baseUrl, '/models/f5/fp16-nfe8');
+  assert.equal(TTS_MODEL.nfeSteps, 8);
+  assert.deepEqual(TTS_OPTIONS, { runtime: 'onnxruntime-web', nfeSteps: 8, output: 'pcm16-wav' });
 });
 
 test('keeps F5 quantization behind the measured quality gate', async () => {

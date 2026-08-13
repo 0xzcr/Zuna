@@ -9,7 +9,8 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=Path("dist/models/f5"))
+    parser.add_argument("--output", type=Path, default=Path("models/f5"))
+    parser.add_argument("--vocab", type=Path, required=True)
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[3]
     selected = json.loads((repo / "optimization/f5_tts/phases/05-quantization/selected.json").read_text())
@@ -18,7 +19,7 @@ def main() -> None:
     target.mkdir(parents=True, exist_ok=True)
     for path in model.glob("*.onnx"):
         shutil.copy2(path, target / path.name)
-    shutil.copy2("/Users/umangsharma/Desktop/F5-TTS/src/f5_tts/infer/examples/vocab.txt", target / "vocab.txt")
+    shutil.copy2(args.vocab, target / "vocab.txt")
     prompts = args.output / "prompts"
     prompts.mkdir(parents=True, exist_ok=True)
     for path in (repo / "optimization/f5_tts/assets/voice-prompts").glob("*.wav"):

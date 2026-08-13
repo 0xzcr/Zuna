@@ -1,2 +1,2 @@
-export const TTS_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
-export const TTS_OPTIONS = { dtype: 'q8', device: 'wasm' };
+export { F5_MODEL as TTS_MODEL } from './optimization/f5_tts/browser/model-config.mjs';
+export const TTS_OPTIONS = { runtime: 'onnxruntime-web', nfeSteps: 8, output: 'pcm16-wav' };

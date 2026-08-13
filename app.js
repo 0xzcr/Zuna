@@ -68,6 +68,7 @@ function setDocument(text, name) {
   renderPassage();
   document.querySelector('.voice-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   notify(`${state.passages.length} passages ready to listen.`);
+  ensureTtsWorker()?.postMessage({ type: 'load' });
 }
 
 function appendDocument(text, page, pageCount) {
@@ -89,12 +90,14 @@ function renderPassage() {
 }
 
 const narratorProfiles = {
-  // Kokoro's voices are open model voices, not imitations of named actors.
-  // Fable gives Elias the most natural storybook direction in this first pass;
-  // Heart is currently the strongest female voice in the published model card.
-  elias: { kokoro: 'bm_fable', kokoroSpeed: .92, pitch: .68, rate: .88, names: ['Alex', 'Daniel', 'Fred', 'Thomas', 'Arthur', 'Oliver', 'David', 'Mark', 'Male'] },
-  mira: { kokoro: 'af_heart', kokoroSpeed: .98, pitch: 1.18, rate: 1.04, names: ['Samantha', 'Karen', 'Victoria', 'Moira', 'Ava', 'Zoe', 'Siri', 'Female', 'Google US English'] },
+  elias: { f5: 'male', pitch: .68, rate: .88, names: ['Alex', 'Daniel', 'Fred', 'Thomas', 'Arthur', 'Oliver', 'David', 'Mark', 'Male'] },
+  mira: { f5: 'female', pitch: 1.18, rate: 1.04, names: ['Samantha', 'Karen', 'Victoria', 'Moira', 'Ava', 'Zoe', 'Siri', 'Female', 'Google US English'] },
 };
+
+function targetSeconds(text) {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.min(12, Math.max(4, Math.ceil(words / 2.2)));
+}
 
 function setEngineNote(message) {
   engineNote.textContent = message;
@@ -171,8 +174,8 @@ function prefetchNext() {
   prefetching = true;
   worker.postMessage({
     type: 'speak', requestId, prefetch: true, text: next,
-    voice: narratorProfiles[state.narrator].kokoro,
-    speed: state.speed * narratorProfiles[state.narrator].kokoroSpeed,
+    voice: narratorProfiles[state.narrator].f5,
+    targetSeconds: targetSeconds(next),
   });
 }
 
@@ -211,16 +214,17 @@ function ensureTtsWorker() {
   ttsWorker.onmessage = ({ data }) => {
     if (data.type === 'progress') {
       const percent = Number.isFinite(data.progress) ? ` ${Math.round(data.progress)}%` : '';
-      setEngineNote(`Loading local narrator${percent} · the model is cached after this download`);
+      const stage = data.stage ? ` · ${data.stage}` : '';
+      setEngineNote(`Loading local F5 narrator${percent}${stage} · cached after download`);
       return;
     }
     if (data.type === 'ready') {
-      setEngineNote('Local Kokoro narrator · model cached on this device');
+      setEngineNote(`Local F5 narrator · ${data.provider || 'WASM'} · model cached on this device`);
       return;
     }
     if (data.type === 'error') {
       if (data.prefetch) { if (data.requestId === prefetchRequest) prefetching = false; return; }
-      if (data.requestId !== activeRequest) return;
+      if (data.requestId !== undefined && data.requestId !== activeRequest) return;
       clearTimeout(generationTimer);
       console.error('Local narrator error:', data.message);
       localModelFailed = true;
@@ -241,7 +245,7 @@ function ensureTtsWorker() {
     if (data.requestId !== activeRequest) return;
 
     clearTimeout(generationTimer);
-    playAudioBlob(new Blob([data.wav], { type: 'audio/wav' }), 'Local Kokoro narrator · model cached on this device');
+    playAudioBlob(new Blob([data.wav], { type: 'audio/wav' }), 'Local F5 narrator · model cached on this device');
   };
   ttsWorker.onerror = (error) => {
     console.error('Local narrator worker error:', error);
@@ -283,13 +287,13 @@ function speakWithLocalModel() {
     setEngineNote('Local narrator timed out · using the browser voice preview');
     notify('The local narrator took too long to respond, so Zuna switched to the browser preview.');
     speakWithBrowser();
-  }, 60000);
+  }, 180000);
   worker.postMessage({
     type: 'speak',
     requestId,
     text: state.passages[state.index],
-    voice: narratorProfiles[state.narrator].kokoro,
-    speed: state.speed * narratorProfiles[state.narrator].kokoroSpeed,
+    voice: narratorProfiles[state.narrator].f5,
+    targetSeconds: targetSeconds(state.passages[state.index]),
   });
 }
 

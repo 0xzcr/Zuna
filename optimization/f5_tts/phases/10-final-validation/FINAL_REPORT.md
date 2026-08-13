@@ -10,6 +10,15 @@
 - Eight-page progressive PDF extraction.
 - Audio prefetch during playback to overlap synthesis with listening.
 
+## Application integration
+
+The root application now uses the validated F5 runtime through `tts-worker.js`. The
+worker loads one shared FP16/FP32 graph set, switches female/male prompt tensors without
+loading another model, serializes requests, and supports cancellation plus next-passage
+prefetch. PDF extraction remains progressive, so narration can start while later pages
+are still being parsed. Browser isolation headers are included for threaded WASM, and
+the staged deployment tree is documented in `/models/README.md`.
+
 ## Speed results
 
 | Path | Measured result |
@@ -30,6 +39,10 @@ limit is the remaining route to substantially lower latency.
 Weight-only 8-bit and 4-bit candidates were rejected: both produced aggregate WER 0.971,
 mean speaker cosine about 0.32, and clipping. FP16 is the smallest validated artifact.
 No distillation is included.
+
+The application timeout is 180 seconds to avoid replacing a valid cold-start generation
+with browser speech on slower devices; warm threaded-WASM chunks remain the measured
+deployment path.
 
 ## Target interpretation
 

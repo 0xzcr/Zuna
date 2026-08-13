@@ -9,7 +9,7 @@ test('switches prompts without loading another model', async () => {
   assert.equal(await queue.generate('one', 4), 'male');
   queue.setVoice('female');
   assert.equal(await queue.generate('two', 4), 'female');
-  assert.deepEqual(calls, [['one', 'male', 4], ['two', 'female', 4]]);
+  assert.deepEqual(calls, [['one', 'male', 4, undefined], ['two', 'female', 4, undefined]]);
 });
 
 test('serializes inference jobs', async () => {

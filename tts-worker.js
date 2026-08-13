@@ -1,65 +1,39 @@
-import { KokoroTTS } from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js';
-import { TTS_MODEL_ID, TTS_OPTIONS } from './tts-config.mjs';
+import * as ort from 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/ort.webgpu.min.mjs';
+import { F5Runtime } from './optimization/f5_tts/browser/f5-runtime.mjs';
+import { F5_MODEL } from './optimization/f5_tts/browser/model-config.mjs';
+import { NarrationQueue } from './optimization/f5_tts/browser/narration-queue.mjs';
 
-let narrator;
-let loading;
-let pendingRequest;
-let processing = false;
+ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/';
+ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 1);
+ort.env.webgpu.powerPreference = 'high-performance';
 
-function reportProgress(progress) {
-  self.postMessage({
-    type: 'progress',
-    progress: typeof progress?.progress === 'number' ? progress.progress : undefined,
-    file: progress?.file,
-  });
+const runtime = new F5Runtime(ort, F5_MODEL);
+const queue = new NarrationQueue(runtime);
+
+async function load() {
+  await runtime.load((stage, step, total) => self.postMessage({ type: 'progress', stage, step, total }));
+  self.postMessage({ type: 'ready', provider: runtime.transformerProvider });
 }
 
-async function loadNarrator() {
-  if (narrator) return narrator;
-  if (!loading) {
-    loading = KokoroTTS.from_pretrained(TTS_MODEL_ID, {
-      ...TTS_OPTIONS,
-      progress_callback: reportProgress,
-    }).then((model) => {
-      narrator = model;
-      self.postMessage({ type: 'ready' });
-      return model;
-    });
-  }
-  return loading;
-}
-
-async function processQueue() {
-  if (processing) return;
-  processing = true;
-  try {
-    while (pendingRequest) {
-      const request = pendingRequest;
-      pendingRequest = undefined;
-      try {
-        const model = await loadNarrator();
-        const audio = await model.generate(request.text, {
-          voice: request.voice,
-          speed: request.speed,
-        });
-        const wav = audio.toWav();
-        self.postMessage({ type: 'audio', requestId: request.requestId, prefetch: request.prefetch === true, wav }, [wav]);
-      } catch (error) {
-        self.postMessage({ type: 'error', requestId: request.requestId, message: error?.message || String(error) });
-      }
-    }
-  } finally {
-    processing = false;
-  }
+async function generate(request) {
+  queue.setVoice(request.voice);
+  const wav = await queue.generate(
+    request.text,
+    request.targetSeconds,
+    (stage, step, total) => self.postMessage({ type: 'progress', requestId: request.requestId, stage, step, total }),
+  );
+  self.postMessage({ type: 'audio', requestId: request.requestId, prefetch: request.prefetch === true, wav }, [wav]);
 }
 
 self.onmessage = ({ data }) => {
   if (data?.type === 'cancel') {
-    pendingRequest = undefined;
+    queue.cancel();
+    return;
+  }
+  if (data?.type === 'load') {
+    load().catch((error) => self.postMessage({ type: 'error', message: error?.message || String(error) }));
     return;
   }
   if (data?.type !== 'speak') return;
-  // Keep only the newest requested passage. Kokoro/WASM should not be run concurrently.
-  pendingRequest = data;
-  processQueue();
+  generate(data).catch((error) => self.postMessage({ type: 'error', requestId: data.requestId, prefetch: data.prefetch === true, message: error?.message || String(error) }));
 };

@@ -34,8 +34,8 @@ ok 5 - publishes a large document incrementally in bounded batches
   duration_ms: 4.053959
   type: 'test'
   ...
-# Subtest: uses the quantized Kokoro model in the WASM runtime
-ok 6 - uses the quantized Kokoro model in the WASM runtime
+# Subtest: uses the validated F5 model in the browser runtime
+ok 6 - uses the validated F5 model in the browser runtime
   ---
   duration_ms: 0.645833
   type: 'test'
