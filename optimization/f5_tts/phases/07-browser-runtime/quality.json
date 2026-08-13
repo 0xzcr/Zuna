@@ -1,0 +1,30 @@
+{
+  "speaker_model": "microsoft/wavlm-base-plus-sv",
+  "summary": {
+    "samples": 1,
+    "mean_wer": 0.0,
+    "exact_transcripts": 1,
+    "mean_speaker_cosine_similarity": 0.9481403827667236,
+    "unclipped_samples": 1
+  },
+  "samples": [
+    {
+      "voice": "female",
+      "profile": "browser-wasm-fp16-nfe8",
+      "sample": "browser-female-4s.wav",
+      "transcript": "Beyond the window, gentle rain moves through the trees.",
+      "word_errors": 0,
+      "word_count": 9,
+      "wer": 0.0,
+      "speaker_cosine_similarity": 0.9481403827667236,
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "duration_seconds": 4.010666666666666,
+        "peak": 0.8912353515625,
+        "rms": 0.18098431499360784,
+        "clipped_samples": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "samples": [
+    {
+      "voice": "female",
+      "profile": "browser-wasm-fp16-nfe8",
+      "sample": "browser-female-4s.wav",
+      "reference_audio": "/Users/umangsharma/Desktop/F5-TTS/data/zuna_female_aligned_source/wavs/clip_0001.wav",
+      "expected_text": "Beyond the window, gentle rain moves through the trees.",
+      "transcript": "browser-female-4s.txt"
+    }
+  ]
+}

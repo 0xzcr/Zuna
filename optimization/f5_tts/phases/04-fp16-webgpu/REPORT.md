@@ -40,9 +40,12 @@ CPU FP16 is recorded only as a compatibility reference. The transformer is inten
 ## Browser preparation
 
 - `onnxruntime-web@1.27.0` is pinned in the project.
-- `browser/webgpu-compat.html` loads the FP16 transformer with WebGPU only, while preprocess and
-  decode use WASM.
+- `browser/webgpu-compat.html` checks session initialization by loading the FP16 transformer
+  with WebGPU only, while preprocess and decode use WASM.
 - The same harness will become the persistent inference worker in the browser-runtime phase.
 
-Output clipping remains visible and will be corrected by the shared limiter phase.
+Phase 7 later confirmed that initialization succeeds but actual transformer execution exceeds
+the tested Apple/Chrome adapter's storage-buffer-per-shader limit; initialization alone is not
+an inference pass.
 
+Output clipping remains visible and will be corrected by the shared limiter phase.

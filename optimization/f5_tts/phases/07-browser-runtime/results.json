@@ -1,0 +1,25 @@
+{
+  "browser": "Google Chrome 152.0.7933.0 arm64",
+  "onnxruntime_web": "1.27.0",
+  "webgpu_session_load": {
+    "status": "pass",
+    "transformer_seconds": 2.0326,
+    "preprocess_seconds": 0.1305,
+    "decode_seconds": 0.1389,
+    "total_seconds": 2.3041
+  },
+  "webgpu_inference": {
+    "status": "fail",
+    "adapter_max_storage_buffers_per_shader_stage": 10,
+    "required_storage_buffers": 11
+  },
+  "wasm_fallback_inference": {
+    "status": "pass",
+    "target_audio_seconds": 4,
+    "wall_seconds_including_session_load": 100.9539,
+    "wav_bytes": 192556,
+    "wer": 0,
+    "speaker_cosine_similarity": 0.9481403827667236,
+    "clipped_samples": 0
+  }
+}
