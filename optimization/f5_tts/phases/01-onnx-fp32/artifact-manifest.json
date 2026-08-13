@@ -1,0 +1,306 @@
+{
+  "artifact_root": "/Users/umangsharma/Desktop/F5-TTS/ckpts/zuna_dual_voice_v3/onnx/fp32-nfe32",
+  "exporter_revision": "47173d5fe22eefd1adc4dab3b8829d227f307e29",
+  "graphs": [
+    {
+      "file": "F5_Decode.onnx",
+      "bytes": 58359944,
+      "sha256": "234ec7841f50d199e67985428e89439e05bff77d80f427d59492e943835f3202",
+      "opset": 20,
+      "nodes": 147,
+      "inputs": [
+        {
+          "name": "denoised",
+          "shape": [
+            1,
+            "max_duration",
+            100
+          ],
+          "type": 1
+        },
+        {
+          "name": "ref_signal_len",
+          "shape": [],
+          "type": 7
+        },
+        {
+          "name": "rms_scale",
+          "shape": [
+            1
+          ],
+          "type": 1
+        },
+        {
+          "name": "ref_mel_tail",
+          "shape": [
+            1,
+            1,
+            100
+          ],
+          "type": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_audio",
+          "shape": [
+            "Castoutput_audio_dim_0",
+            1,
+            "generated_len"
+          ],
+          "type": 1
+        }
+      ],
+      "metadata": {
+        "model_series": "v0",
+        "sample_rate": "24000",
+        "in_sample_rate": "24000",
+        "out_sample_rate": "24000",
+        "nfe_step": "32",
+        "max_signal_length": "4096",
+        "hop_length": "256",
+        "model_file_name_preprocess": "F5_Preprocess.onnx",
+        "model_file_name_transformer": "F5_Transformer.onnx",
+        "model_file_name_decode": "F5_Decode.onnx"
+      }
+    },
+    {
+      "file": "F5_Metadata.onnx",
+      "bytes": 465,
+      "sha256": "b5459fe42169c3577c4a232b1b5c22b57feb0262ca17827b39b93213d251649e",
+      "opset": 20,
+      "nodes": 1,
+      "inputs": [
+        {
+          "name": "metadata_marker",
+          "shape": [
+            1
+          ],
+          "type": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "metadata_marker_out",
+          "shape": [
+            1
+          ],
+          "type": 7
+        }
+      ],
+      "metadata": {
+        "model_series": "v0",
+        "sample_rate": "24000",
+        "in_sample_rate": "24000",
+        "out_sample_rate": "24000",
+        "nfe_step": "32",
+        "max_signal_length": "4096",
+        "hop_length": "256",
+        "model_file_name_preprocess": "F5_Preprocess.onnx",
+        "model_file_name_transformer": "F5_Transformer.onnx",
+        "model_file_name_decode": "F5_Decode.onnx"
+      }
+    },
+    {
+      "file": "F5_Preprocess.onnx",
+      "bytes": 42447465,
+      "sha256": "b1d33471012cb2d9d1784a2aa7e787c04d0a3ce5b038f1e1216b1e03cc99ac26",
+      "opset": 20,
+      "nodes": 194,
+      "inputs": [
+        {
+          "name": "audio",
+          "shape": [
+            1,
+            1,
+            "audio_len"
+          ],
+          "type": 1
+        },
+        {
+          "name": "text_ids",
+          "shape": [
+            1,
+            "text_ids_len"
+          ],
+          "type": 6
+        },
+        {
+          "name": "max_duration",
+          "shape": [
+            1
+          ],
+          "type": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "noise",
+          "shape": [
+            1,
+            "max_duration",
+            100
+          ],
+          "type": 1
+        },
+        {
+          "name": "rope_cos",
+          "shape": [
+            2,
+            1,
+            "max_duration",
+            64
+          ],
+          "type": 1
+        },
+        {
+          "name": "rope_sin",
+          "shape": [
+            2,
+            1,
+            "max_duration",
+            64
+          ],
+          "type": 1
+        },
+        {
+          "name": "cat_mel_text",
+          "shape": [
+            1,
+            "max_duration",
+            612
+          ],
+          "type": 1
+        },
+        {
+          "name": "cat_mel_text_drop",
+          "shape": [
+            1,
+            "max_duration",
+            612
+          ],
+          "type": 1
+        },
+        {
+          "name": "ref_signal_len",
+          "shape": [],
+          "type": 7
+        },
+        {
+          "name": "rms_scale",
+          "shape": [
+            1
+          ],
+          "type": 1
+        },
+        {
+          "name": "ref_mel_tail",
+          "shape": [
+            1,
+            "Sliceref_mel_tail_dim_1",
+            100
+          ],
+          "type": 1
+        }
+      ],
+      "metadata": {
+        "model_series": "v0",
+        "sample_rate": "24000",
+        "in_sample_rate": "24000",
+        "out_sample_rate": "24000",
+        "nfe_step": "32",
+        "max_signal_length": "4096",
+        "hop_length": "256",
+        "model_file_name_preprocess": "F5_Preprocess.onnx",
+        "model_file_name_transformer": "F5_Transformer.onnx",
+        "model_file_name_decode": "F5_Decode.onnx"
+      }
+    },
+    {
+      "file": "F5_Transformer.onnx",
+      "bytes": 1321891035,
+      "sha256": "4bb44f536a4b7646c153b45f0eecab030a487b09dc553a1796493b1e6b2ba80e",
+      "opset": 20,
+      "nodes": 1628,
+      "inputs": [
+        {
+          "name": "noise",
+          "shape": [
+            1,
+            "max_duration",
+            100
+          ],
+          "type": 1
+        },
+        {
+          "name": "rope_cos",
+          "shape": [
+            2,
+            1,
+            "max_duration",
+            64
+          ],
+          "type": 1
+        },
+        {
+          "name": "rope_sin",
+          "shape": [
+            2,
+            1,
+            "max_duration",
+            64
+          ],
+          "type": 1
+        },
+        {
+          "name": "cat_mel_text",
+          "shape": [
+            1,
+            "max_duration",
+            612
+          ],
+          "type": 1
+        },
+        {
+          "name": "cat_mel_text_drop",
+          "shape": [
+            1,
+            "max_duration",
+            612
+          ],
+          "type": 1
+        },
+        {
+          "name": "time_step",
+          "shape": [
+            1
+          ],
+          "type": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "denoised",
+          "shape": [
+            "Adddenoised_dim_0",
+            "max_duration",
+            100
+          ],
+          "type": 1
+        }
+      ],
+      "metadata": {
+        "model_series": "v0",
+        "sample_rate": "24000",
+        "in_sample_rate": "24000",
+        "out_sample_rate": "24000",
+        "nfe_step": "32",
+        "max_signal_length": "4096",
+        "hop_length": "256",
+        "model_file_name_preprocess": "F5_Preprocess.onnx",
+        "model_file_name_transformer": "F5_Transformer.onnx",
+        "model_file_name_decode": "F5_Decode.onnx"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+Exporter: DakeQQ/F5-TTS-ONNX@47173d5fe22eefd1adc4dab3b8829d227f307e29
+Model series: v0
+Checkpoint: /Users/umangsharma/Desktop/F5-TTS/ckpts/zuna_dual_voice_v3/zuna_dual_voice_final.safetensors
+Output: /Users/umangsharma/Desktop/F5-TTS/ckpts/zuna_dual_voice_v3/onnx/fp32-nfe32
+Precision: FP32
+NFE: 32
+Opset: 20
