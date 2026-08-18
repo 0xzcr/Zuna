@@ -1,7 +1,0 @@
-{
-  "synthetic_pages": 500,
-  "batch_size": 8,
-  "batches": 63,
-  "first_batch_milliseconds": 0.054334,
-  "total_batch_orchestration_milliseconds": 73.907584
-}

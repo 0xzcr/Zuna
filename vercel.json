@@ -6,9 +6,7 @@
     { "source": "/app.js", "destination": "/frontend/app.js" },
     { "source": "/styles.css", "destination": "/frontend/styles.css" },
     { "source": "/progressive-pages.mjs", "destination": "/frontend/progressive-pages.mjs" },
-    { "source": "/tts-worker.js", "destination": "/frontend/tts-worker.js" },
-    { "source": "/assets/:path*", "destination": "/frontend/assets/:path*" },
-    { "source": "/models/:path*", "destination": "/backend/models/:path*" }
+    { "source": "/assets/:path*", "destination": "/frontend/assets/:path*" }
   ],
   "headers": [
     {
@@ -27,19 +25,6 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=86400, stale-while-revalidate=604800"
-        }
-      ]
-    },
-    {
-      "source": "/backend/models/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        },
-        {
-          "key": "Cross-Origin-Resource-Policy",
-          "value": "same-origin"
         }
       ]
     }

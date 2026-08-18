@@ -7,8 +7,6 @@ __pycache__/
 .DS_Store
 node_modules/
 dist/
-*.onnx
-*.onnx.data
 *.safetensors
 *.ckpt
 *.pt

@@ -1,5 +1,0 @@
-{
-  "variant": "fp16-nfe8",
-  "artifact_root": "/Users/umangsharma/Desktop/F5-TTS/ckpts/zuna_dual_voice_v3/onnx/fp16-nfe8",
-  "reason": "Both weight-only 8-bit and 4-bit candidates failed the intelligibility and speaker-similarity quality gate."
-}
