@@ -10,7 +10,7 @@ function log(message) {
 
 async function load(name, providers) {
   const graphStarted = performance.now();
-  const path = `../../../.local/models/fp16-nfe8/${name}.onnx`;
+  const path = `/backend/models/f5/fp16-nfe8/${name}.onnx`;
   log(`Loading ${name} with ${providers.join(', ')}…`);
   const session = await ort.InferenceSession.create(path, {
     executionProviders: providers,

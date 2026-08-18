@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { NarrationQueue } from '../optimization/f5_tts/browser/narration-queue.mjs';
+import { NarrationQueue } from '../../backend/model_runtime/f5/narration-queue.mjs';
 
 test('switches prompts without loading another model', async () => {
   const calls = [];

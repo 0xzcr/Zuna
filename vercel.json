@@ -1,6 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/frontend/index.html" },
+    { "source": "/app.js", "destination": "/frontend/app.js" },
+    { "source": "/styles.css", "destination": "/frontend/styles.css" },
+    { "source": "/progressive-pages.mjs", "destination": "/frontend/progressive-pages.mjs" },
+    { "source": "/tts-worker.js", "destination": "/frontend/tts-worker.js" },
+    { "source": "/assets/:path*", "destination": "/frontend/assets/:path*" },
+    { "source": "/models/:path*", "destination": "/backend/models/:path*" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -22,7 +31,7 @@
       ]
     },
     {
-      "source": "/models/(.*)",
+      "source": "/backend/models/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

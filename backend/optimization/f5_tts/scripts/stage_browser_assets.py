@@ -11,11 +11,11 @@ CHUNK_BYTES = 90 * 1024 * 1024
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=Path("models/f5"))
+    parser.add_argument("--output", type=Path, default=Path("backend/models/f5"))
     parser.add_argument("--vocab", type=Path, required=True)
     args = parser.parse_args()
-    repo = Path(__file__).resolve().parents[3]
-    selected = json.loads((repo / "optimization/f5_tts/phases/05-quantization/selected.json").read_text())
+    repo = Path(__file__).resolve().parents[4]
+    selected = json.loads((repo / "backend/optimization/f5_tts/phases/05-quantization/selected.json").read_text())
     model = Path(selected["artifact_root"])
     target = args.output / "fp16-nfe8"
     target.mkdir(parents=True, exist_ok=True)
@@ -31,7 +31,7 @@ def main() -> None:
     shutil.copy2(args.vocab, target / "vocab.txt")
     prompts = args.output / "prompts"
     prompts.mkdir(parents=True, exist_ok=True)
-    for path in (repo / "optimization/f5_tts/assets/voice-prompts").glob("*.wav"):
+    for path in (repo / "backend/optimization/f5_tts/assets/voice-prompts").glob("*.wav"):
         shutil.copy2(path, prompts / path.name)
     print(args.output.resolve())
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { DEFAULT_CEILING, peakNormalize } from '../optimization/f5_tts/browser/audio-postprocess.mjs';
+import { DEFAULT_CEILING, peakNormalize } from '../../backend/model_runtime/f5/audio-postprocess.mjs';
 
 test('leaves already-safe audio untouched', () => {
   const input = new Float32Array([-.5, 0, .5]);

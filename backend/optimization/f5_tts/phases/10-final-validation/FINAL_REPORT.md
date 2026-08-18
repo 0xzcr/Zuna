@@ -17,7 +17,7 @@ worker loads one shared FP16/FP32 graph set, switches female/male prompt tensors
 loading another model, serializes requests, and supports cancellation plus next-passage
 prefetch. PDF extraction remains progressive, so narration can start while later pages
 are still being parsed. Browser isolation headers are included for threaded WASM, and
-the staged deployment tree is documented in `/models/README.md`.
+the staged deployment tree is documented in `/backend/models/README.md`.
 
 ## Speed results
 

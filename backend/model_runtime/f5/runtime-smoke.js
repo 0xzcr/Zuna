@@ -5,10 +5,10 @@ ort.env.wasm.wasmPaths = '../../../node_modules/onnxruntime-web/dist/';
 ort.env.wasm.numThreads = Math.min(8, navigator.hardwareConcurrency || 1);
 const log = document.querySelector('#log');
 const config = {
-  baseUrl: '../../../.local/models/fp16-nfe8', sampleRate: 24000, hopLength: 256, nfeSteps: 8, maxSignalLength: 4096,
+  baseUrl: '/backend/models/f5/fp16-nfe8', sampleRate: 24000, hopLength: 256, nfeSteps: 8, maxSignalLength: 4096,
   voices: {
-    female: { audio: '../assets/voice-prompts/female.wav', text: 'You begin to pull away from Mars. ' },
-    male: { audio: '../assets/voice-prompts/male.wav', text: 'the words on the page came alive. ' },
+    female: { audio: '/backend/models/f5/prompts/female.wav', text: 'You begin to pull away from Mars. ' },
+    male: { audio: '/backend/models/f5/prompts/male.wav', text: 'the words on the page came alive. ' },
   },
 };
 

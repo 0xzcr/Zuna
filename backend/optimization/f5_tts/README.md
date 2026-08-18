@@ -1,6 +1,8 @@
 # Zuna F5-TTS optimization
 
 This directory is the reproducible record for optimizing the dual-voice Zuna checkpoint.
+It is offline model-development work, not a runtime backend service. Browser model runtime
+code lives under `backend/model_runtime/f5/` and is imported by the thin frontend worker.
 
 ## Selected configuration
 
@@ -29,7 +31,8 @@ runs/<run-id>/           Immutable output from one benchmark run
   samples/               Generated WAV files
   asr/                   Whisper transcripts
 phases/                  Reports, manifests, logs, samples, and quality decisions
-browser/                 Browser runtime, worker, scheduling, and smoke harnesses
+
+The browser model runtime and smoke harnesses are in `backend/model_runtime/f5/`.
 ```
 
 ## Baseline
@@ -38,8 +41,8 @@ Run from the Zuna repository root:
 
 ```bash
 /Users/umangsharma/Desktop/F5-TTS/ckpts/ai/bin/python \
-  optimization/f5_tts/scripts/benchmark_pytorch.py \
-  --config optimization/f5_tts/config/pytorch-baseline.json \
+  backend/optimization/f5_tts/scripts/benchmark_pytorch.py \
+  --config backend/optimization/f5_tts/config/pytorch-baseline.json \
   --f5-root /Users/umangsharma/Desktop/F5-TTS
 ```
 
@@ -51,7 +54,7 @@ speaker similarity, and audio integrity with:
 
 ```bash
 /Users/umangsharma/Desktop/F5-TTS/ckpts/ai/bin/python \
-  optimization/f5_tts/scripts/score_run.py \
-  --run "$(cat optimization/f5_tts/latest-run.txt)" \
+  backend/optimization/f5_tts/scripts/score_run.py \
+  --run "$(cat backend/optimization/f5_tts/latest-run.txt)" \
   --f5-root /Users/umangsharma/Desktop/F5-TTS
 ```

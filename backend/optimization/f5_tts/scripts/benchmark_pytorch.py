@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--f5-root", type=Path, required=True)
-    parser.add_argument("--output-root", type=Path, default=Path("optimization/f5_tts/runs"))
+    parser.add_argument("--output-root", type=Path, default=Path("backend/optimization/f5_tts/runs"))
     return parser.parse_args()
 
 

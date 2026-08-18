@@ -1,7 +1,7 @@
 import * as ort from 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/ort.webgpu.min.mjs';
-import { F5Runtime } from './optimization/f5_tts/browser/f5-runtime.mjs';
-import { F5_MODEL } from './optimization/f5_tts/browser/model-config.mjs';
-import { NarrationQueue } from './optimization/f5_tts/browser/narration-queue.mjs';
+import { F5Runtime } from '../backend/model_runtime/f5/f5-runtime.mjs';
+import { F5_MODEL } from '../backend/model_runtime/f5/model-config.mjs';
+import { NarrationQueue } from '../backend/model_runtime/f5/narration-queue.mjs';
 
 ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/';
 ort.env.wasm.numThreads = Math.min(8, navigator.hardwareConcurrency || 1);

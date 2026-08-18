@@ -68,7 +68,7 @@ Measured browser baseline for a four-second passage on that Apple/Chrome setup:
 
 These numbers are device-specific and are not a promise of production latency. The complete
 performance and quality evidence is in
-[`optimization/f5_tts/phases/`](optimization/f5_tts/phases/), especially the browser,
+[`backend/optimization/f5_tts/phases/`](backend/optimization/f5_tts/phases/), especially the browser,
 quantization, progressive-PDF, and WebGPU reports.
 
 ## Privacy and deployment boundary
@@ -84,13 +84,13 @@ before local testing or deployment:
 
 ```bash
 /Users/umangsharma/Desktop/F5-TTS/ckpts/ai/bin/python \
-  optimization/f5_tts/scripts/stage_browser_assets.py \
-  --output models/f5 \
+  backend/optimization/f5_tts/scripts/stage_browser_assets.py \
+  --output backend/models/f5 \
   --vocab /Users/umangsharma/Desktop/F5-TTS/src/f5_tts/infer/examples/vocab.txt
 ```
 
 The transformer is split into eight parts because Vercel rejects individual files over
-100 MiB. Without the staged `models/f5` package, the UI can load but local F5 narration
+100 MiB. Without the staged `backend/models/f5` package, the UI can load but local F5 narration
 cannot load its model.
 
 ## Run locally
@@ -103,7 +103,7 @@ npm install
 npm run dev
 ```
 
-Open [http://127.0.0.1:4173](http://127.0.0.1:4173). Before committing or deploying, run:
+Open [http://127.0.0.1:4173/frontend/](http://127.0.0.1:4173/frontend/). Before committing or deploying, run:
 
 ```bash
 npm test
@@ -113,7 +113,7 @@ git diff --check
 
 ## Deploy to Vercel
 
-Deploy from the repository root with the staged `models/f5` directory present. Vercel is only
+Deploy from the repository root with the staged `backend/models/f5` directory present. Vercel is only
 the static host for the current prototype; no server-side environment variables or services
 are required.
 
@@ -131,9 +131,9 @@ assets/                            Artwork
 app.js                             File intake, cleanup, playback, and local state
 tts-worker.js                      Browser-local F5 worker
 progressive-pages.mjs              Bounded PDF extraction
-optimization/f5_tts/browser/       ONNX Runtime Web pipeline and smoke harnesses
-optimization/f5_tts/phases/        Benchmarks, quality gates, and decision reports
-models/                            Locally staged, intentionally untracked model assets
+backend/model_runtime/f5/          ONNX Runtime Web pipeline and smoke harnesses
+backend/optimization/f5_tts/       Benchmarks, quality gates, and decision reports
+backend/models/                    Locally staged, intentionally untracked model assets
 vercel.json                        Static deployment headers
 TRUTH_BOARD.md                     Product decisions and guardrails
 ```

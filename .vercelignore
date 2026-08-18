@@ -12,7 +12,7 @@ training/
 *.pt
 *.pth
 # The staged browser package is intentionally deployed with the app.
-!models/
-!models/f5/
-!models/f5/**
-models/f5/fp16-nfe8/F5_Transformer.onnx
+!backend/models/
+!backend/models/f5/
+!backend/models/f5/**
+backend/models/f5/fp16-nfe8/F5_Transformer.onnx

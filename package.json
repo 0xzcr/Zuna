@@ -4,10 +4,10 @@
   "private": true,
   "description": "A private, browser-local PDF narration companion.",
   "scripts": {
-    "check": "node --check app.js && node --check tts-worker.js && node --check progressive-pages.mjs",
-    "test": "node --test",
-    "dev": "python3 -m http.server 4173",
-    "preview": "python3 -m http.server 4173"
+    "check": "node --check frontend/app.js && node --check frontend/tts-worker.js && node --check frontend/progressive-pages.mjs",
+    "test": "node --test frontend/test/*.mjs",
+    "dev": "python3 -m http.server 4173 --directory .",
+    "preview": "python3 -m http.server 4173 --directory ."
   },
   "engines": {
     "node": ">=20"
