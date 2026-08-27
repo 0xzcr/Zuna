@@ -4,12 +4,25 @@
   "private": true,
   "description": "A private, browser-local PDF narration companion.",
   "scripts": {
-    "check": "node --check frontend/app.js && node --check frontend/progressive-pages.mjs",
-    "test": "node --test frontend/test/*.mjs",
-    "dev": "python3 -m http.server 4173 --directory .",
-    "preview": "python3 -m http.server 4173 --directory ."
+    "check": "python3 -m py_compile backend/kokoro_server.py && node --check frontend/app.js && node --check frontend/epub.mjs && node --check frontend/local-cache.mjs && node --check frontend/reader-core.mjs && node --check frontend/kokoro-runtime.mjs && node --check backend/server.mjs && node --check mobile/src/reader-state.mjs && next build",
+    "test": "node --test frontend/test/*.mjs backend/test/*.mjs mobile/test/*.mjs",
+    "backend": "node backend/server.mjs",
+    "setup:kokoro": "bash backend/setup-kokoro.sh",
+    "kokoro": "backend/.venv/bin/python backend/kokoro_server.py",
+    "dev": "next dev -p 4173",
+    "dev:full": "backend/.venv/bin/python backend/kokoro_server.py & KOKORO_PID=$!; trap 'kill $KOKORO_PID' EXIT INT TERM; next dev -p 4173",
+    "build": "next build",
+    "start": "next start -p 4173",
+    "preview": "next start -p 4173"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.9"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "next": "^16.3.3",
+    "pdfjs-dist": "^6.2.108",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   }
 }

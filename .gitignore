@@ -6,6 +6,7 @@
 __pycache__/
 .DS_Store
 node_modules/
+.next/
 dist/
 *.safetensors
 *.ckpt
@@ -13,3 +14,4 @@ dist/
 *.pth
 .vercel
 .env*
+backend/kokoro_models/

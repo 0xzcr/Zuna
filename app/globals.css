@@ -1,0 +1,11 @@
+@import '../frontend/styles.css';
+
+.loading-room {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: var(--muted);
+  font: 11px var(--mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}

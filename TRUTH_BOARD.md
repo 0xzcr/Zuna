@@ -11,8 +11,8 @@ This is the current source of truth for product decisions. A statement is only a
 | Privacy | Documents remain on the user’s device. Processing is local in the browser. |
 | First listen | No account is required before the first listen. |
 | Platform | The initial target is the modern desktop browser. |
-| Browser narrator | Narration uses the browser’s native speech synthesis API. Voice availability depends on the device and browser. |
-| Prototype boundary | Local extraction, sentence playback, highlighting, and resume state are enough to validate the reading idea. |
+| Browser narrator | Narration uses the local Kokoro-82M runtime through same-origin Next.js routes. All discovered voices are free. |
+| Prototype boundary | Local extraction, chapter navigation, bounded narration chunks, persistent caching, and resume state validate the reading idea. |
 
 ## Hypotheses — need evidence
 
@@ -26,10 +26,10 @@ This is the current source of truth for product decisions. A statement is only a
 
 ## Non-negotiable guardrails
 
-- Do not upload document contents to a narration server.
+- Do not upload document contents to a hosted narration server.
 - Do not promise scanned-PDF OCR in the first release.
 - Do not make users wait for the entire document before playback begins.
-- Do not hide browser voice availability or platform differences.
+- Do not hide local-runtime availability or platform differences.
 
 ## Open decisions
 
