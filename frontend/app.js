@@ -30,6 +30,10 @@ function voiceDisplayName(voice) { return voice.slice(3).replaceAll('_', ' ').re
 
 function renderVoicePicker() {
   const select = $('#voiceSelect'); if (!select) return;
+  const picker = document.querySelector('.voice-picker');
+  let retry = $('#retryKokoro');
+  if (!retry && picker) { retry = document.createElement('button'); retry.id = 'retryKokoro'; retry.className = 'retry-button'; retry.type = 'button'; retry.textContent = 'Retry connection'; retry.addEventListener('click', loadKokoroVoices); picker.append(retry); }
+  if (retry) retry.hidden = state.kokoroOnline;
   select.replaceChildren();
   if (!state.kokoroVoices.length) {
     const option = document.createElement('option'); option.textContent = 'Start the local Kokoro runtime…'; select.append(option); select.disabled = true;
@@ -111,5 +115,7 @@ $('#clearButton').addEventListener('click', () => { stopAudio(); clearAudioCache
 playButton.addEventListener('click', togglePlayback); $('#backButton').addEventListener('click', () => { stopAudio(); state.index = Math.max(0, state.index - 1); renderPassage(); }); $('#forwardButton').addEventListener('click', () => { stopAudio(); state.index = Math.min(Math.max(0, state.passages.length - 1), state.index + 1); renderPassage(); }); seek.addEventListener('input', () => { stopAudio(); state.index = Number(seek.value); renderPassage(); });
 $('#speedSelect').value = String(state.speed); $('#speedSelect').addEventListener('change', (event) => { const wasSpeaking = state.speaking; stopAudio(); state.speed = Number(event.target.value); localStorage.setItem('zuna-speed', state.speed); if (wasSpeaking) speakCurrent(); });
 document.querySelectorAll('[data-nav]').forEach((link) => link.addEventListener('click', () => document.querySelectorAll('[data-nav]').forEach((item) => item.classList.toggle('is-active', item.dataset.nav === link.dataset.nav))));
+window.addEventListener('focus', () => { if (!state.kokoroOnline) loadKokoroVoices(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !state.kokoroOnline) loadKokoroVoices(); });
 const settingsDialog = $('#settingsDialog'); const openSettings = () => settingsDialog?.showModal(); $('#settingsButton')?.addEventListener('click', openSettings); $('#mobileSettingsButton')?.addEventListener('click', openSettings); $('#closeSettings')?.addEventListener('click', () => settingsDialog?.close()); $('#membershipButton')?.addEventListener('click', () => notify('We will keep a place for you. Zuna+ is coming soon.'));
 if (state.fileName) $('#fileName').textContent = state.fileName; loadKokoroVoices();
