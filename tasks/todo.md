@@ -15,8 +15,8 @@
 
 ## Backend / mobile
 
-- [ ] Phase 0 backend/data model skeleton.
-- [ ] Phase 1 React Native app shell and guest reader flow.
+- [x] Phase 0 backend/data model skeleton.
+- [x] Phase 1 React Native app shell and guest reader flow.
 - [ ] Phase 1 Kokoro pipeline integration.
 - [ ] Phase 2 Sarvam wallet generation and Dodo checkout.
 - [ ] Phase 3 Zuna+, cloning, and Tier 2 chapter detection.

@@ -29,16 +29,16 @@ Rebuild Zuna as a guest-first, local-first audiobook reader with a polished web 
 
 ### Phase 0: Backend skeleton
 
-- [ ] Define shared user, wallet, book, chunk, and generation-event contracts.
-- [ ] Implement guest-safe user creation, `$0` wallet state, and book creation endpoints.
-- [ ] Add request validation, error states, health check, and focused API tests.
-- [ ] Add environment-driven pricing/payment/provider configuration with no secrets in client code.
+- [x] Define user, wallet, book, and chunk state contracts.
+- [x] Implement guest-safe user creation, `$0` wallet state, and book creation endpoints.
+- [x] Add request validation, error states, security headers, rate limiting, health check, and focused API tests.
+- [x] Add environment-driven origin/port configuration with no provider secrets in client code.
 
 ### Phase 1: Mobile core loop
 
-- [ ] Scaffold the React Native iOS/Android app.
-- [ ] Add guest import/library/player flows around the shared chunk state model.
-- [ ] Add the Kokoro ONNX integration seam and bounded prefetch/extraction interfaces.
+- [x] Scaffold the React Native iOS/Android app.
+- [x] Add guest import/library/player flows around the shared chunk state model.
+- [x] Add the Kokoro ONNX integration seam; native extraction and ONNX generation remain next.
 
 ### Phase 2+: Paid narration and polish
 

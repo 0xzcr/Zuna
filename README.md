@@ -61,6 +61,9 @@ frontend/                 Browser application and tests
   assets/                 Artwork
   test/                   Application tests
 
+backend/                  Phase 0 API skeleton and tests
+mobile/                   React Native / Expo app shell and tests
+
 vercel.json               Static deployment rewrites and headers
 package.json              Root development and test commands
 TRUTH_BOARD.md            Product decisions and guardrails

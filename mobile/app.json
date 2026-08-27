@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "Zuna",
+    "slug": "zuna",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "zuna",
+    "ios": { "supportsTablet": true },
+    "android": { "adaptiveIcon": { "backgroundColor": "#c76650" } }
+  }
+}
