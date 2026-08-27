@@ -1,6 +1,6 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
 import { cleanText, splitIntoPassages, clampProgress } from './reader-core.mjs';
-import { DEFAULT_KOKORO_URL, normalizeVoices, synthesisPayload, audioCacheKey } from './kokoro-runtime.mjs';
+import { DEFAULT_KOKORO_URL, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey } from './kokoro-runtime.mjs';
 
 const state = {
   passages: [], index: 0, voice: localStorage.getItem('zuna-kokoro-voice') || '',
@@ -28,33 +28,23 @@ function setEngineNote(message) { engineNote.textContent = message; }
 function languageName(voice) { return ({ af: 'American English', am: 'American English', bf: 'British English', bm: 'British English', ef: 'Spanish', em: 'Spanish', ff: 'French', hf: 'Hindi', hm: 'Hindi', if: 'Italian', im: 'Italian', jf: 'Japanese', jm: 'Japanese', pf: 'Brazilian Portuguese', pm: 'Brazilian Portuguese', zf: 'Mandarin', zm: 'Mandarin' })[voice.slice(0, 2)] || 'Kokoro voice'; }
 function voiceDisplayName(voice) { return voice.slice(3).replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) || voice; }
 
-function renderVoiceGrid() {
-  const grid = $('#voiceGrid'); if (!grid) return;
-  const query = ($('#voiceSearch')?.value || '').trim().toLowerCase();
-  grid.replaceChildren();
-  const filtered = state.kokoroVoices.filter((voice) => !query || `${voice} ${languageName(voice)}`.toLowerCase().includes(query));
-  if (!filtered.length) {
-    const empty = document.createElement('div'); empty.className = 'voice-empty'; empty.setAttribute('role', 'status');
-    const mark = document.createElement('span'); mark.className = 'voice-empty-mark'; mark.textContent = '◌';
-    const title = document.createElement('strong'); title.textContent = state.kokoroOnline ? 'No matching voices' : 'Connect your free Kokoro runtime';
-    const detail = document.createElement('span'); detail.textContent = state.kokoroOnline ? 'Try another voice name or language.' : `Start Kokoro locally at ${KOKORO_URL}.`;
-    empty.append(mark, title, detail); grid.append(empty); return;
+function renderVoicePicker() {
+  const select = $('#voiceSelect'); if (!select) return;
+  select.replaceChildren();
+  if (!state.kokoroVoices.length) {
+    const option = document.createElement('option'); option.textContent = 'Start the local Kokoro runtime…'; select.append(option); select.disabled = true;
+    const count = $('#voiceCount'); if (count) count.textContent = 'Runtime offline'; return;
   }
-  filtered.forEach((voice, index) => {
-    const card = document.createElement('button'); card.className = 'narrator-card'; card.type = 'button'; card.dataset.narrator = voice; card.setAttribute('role', 'radio'); card.setAttribute('aria-checked', String(state.voice === voice));
-    if (state.voice === voice) card.classList.add('is-selected');
-    const top = document.createElement('span'); top.className = 'narrator-top'; const number = document.createElement('span'); number.className = 'narrator-number'; number.textContent = String(index + 1).padStart(2, '0');
-    const wave = document.createElement('span'); wave.className = 'voice-wave'; wave.setAttribute('aria-hidden', 'true'); [6, 14, 20, 11, 17, 8, 15].forEach((height) => { const bar = document.createElement('i'); bar.style.height = `${height}px`; wave.append(bar); }); top.append(number, wave);
-    const name = document.createElement('span'); name.className = 'narrator-name'; name.textContent = voiceDisplayName(voice);
-    const role = document.createElement('span'); role.className = 'narrator-role'; role.textContent = `${languageName(voice)} · free`;
-    const description = document.createElement('span'); description.className = 'narrator-description'; description.textContent = `${voice} · local Kokoro voice`;
-    const check = document.createElement('span'); check.className = 'card-check'; check.setAttribute('aria-hidden', 'true'); check.textContent = '✓'; card.append(top, name, role, description, check); card.addEventListener('click', () => chooseVoice(voice)); grid.append(card);
+  groupVoices(state.kokoroVoices).forEach(({ label, voices }) => {
+    const group = document.createElement('optgroup'); group.label = label;
+    voices.forEach((voice) => { const option = document.createElement('option'); option.value = voice; option.textContent = voiceDisplayName(voice); group.append(option); });
+    select.append(group);
   });
-  const count = $('#voiceCount'); if (count) count.textContent = `${filtered.length} of ${state.kokoroVoices.length} voices · all free`;
+  select.disabled = false; select.value = state.voice; const count = $('#voiceCount'); if (count) count.textContent = `${state.kokoroVoices.length} voices · all free`;
 }
 
 function chooseVoice(voice) {
-  const wasSpeaking = state.speaking; stopAudio(); state.voice = voice; localStorage.setItem('zuna-kokoro-voice', voice); renderVoiceGrid();
+  const wasSpeaking = state.speaking; stopAudio(); state.voice = voice; localStorage.setItem('zuna-kokoro-voice', voice); renderVoicePicker();
   if (wasSpeaking) speakCurrent();
 }
 
@@ -65,7 +55,7 @@ async function loadKokoroVoices() {
     if (!state.kokoroVoices.includes(state.voice)) { state.voice = state.kokoroVoices[0] || ''; if (state.voice) localStorage.setItem('zuna-kokoro-voice', state.voice); }
     setEngineNote(state.kokoroOnline ? `Kokoro local runtime · ${state.kokoroVoices.length} voices · all free` : 'Kokoro runtime is online but has no voice pack.');
   } catch { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote(`Kokoro is offline · start the local runtime at ${KOKORO_URL}`); }
-  renderVoiceGrid();
+  renderVoicePicker();
 }
 
 function setDocument(text, name) {
@@ -114,7 +104,7 @@ async function extractPdf(file) {
 
 async function handleFile(file) { if (!file) return; if (file.type === 'text/plain' || file.name.endsWith('.txt')) { extractionId += 1; setDocument(await file.text(), file.name); } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) { try { await extractPdf(file); } catch (error) { console.error(error); notify('I could not read that book. Try a readable file.'); } } else notify('Please choose a readable book file (PDF or TXT).'); }
 
-$('#voiceSearch')?.addEventListener('input', renderVoiceGrid); pdfInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
+$('#voiceSelect')?.addEventListener('change', (event) => chooseVoice(event.target.value)); pdfInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
 ['dragenter', 'dragover'].forEach((eventName) => dropZone.addEventListener(eventName, (event) => { event.preventDefault(); dropZone.classList.add('is-dragging'); }));
 ['dragleave', 'drop'].forEach((eventName) => dropZone.addEventListener(eventName, (event) => { event.preventDefault(); dropZone.classList.remove('is-dragging'); })); dropZone.addEventListener('drop', (event) => handleFile(event.dataTransfer.files[0]));
 $('#clearButton').addEventListener('click', () => { stopAudio(); clearAudioCache(); state.passages = []; state.index = 0; state.fileName = ''; pdfInput.value = ''; localStorage.removeItem('zuna-file-name'); libraryPanel.hidden = true; $('#nowPlayingLabel').textContent = 'Choose a document to begin'; renderPassage(); });

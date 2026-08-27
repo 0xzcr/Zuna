@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeVoices, synthesisPayload, audioCacheKey } from '../kokoro-runtime.mjs';
+import { normalizeVoices, groupVoices, synthesisPayload, audioCacheKey } from '../kokoro-runtime.mjs';
 
 test('normalizes the Kokoro voice list and keeps every valid voice', () => {
   assert.deepEqual(normalizeVoices(['af_heart', ' hi_sky ', '', 42, 'af_heart']), ['af_heart', 'hi_sky', 'af_heart']);
@@ -10,6 +10,13 @@ test('builds the local synthesis payload without provider or billing fields', ()
   assert.deepEqual(synthesisPayload({ text: 'Hello.', voice: 'af_heart', speed: 1.15 }), {
     text: 'Hello.', voice: 'af_heart', speed: 1.15, sentence_pause: 0.25, expressiveness: 0.5,
   });
+});
+
+test('groups every voice into a stable language dropdown order', () => {
+  assert.deepEqual(groupVoices(['hf_alpha', 'af_heart', 'hf_beta']), [
+    { label: 'Hindi', voices: ['hf_alpha', 'hf_beta'] },
+    { label: 'American English', voices: ['af_heart'] },
+  ]);
 });
 
 test('separates cached audio by passage, voice, and speed', () => {
