@@ -1,80 +1,109 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f5f2ea" />
-    <title>Zuna — Your Books, given a voice worth listening to</title>
+    <meta name="theme-color" content="#f5f0e8" />
+    <title>Zuna — a quieter way to read</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="app-shell">
-      <nav class="topbar" aria-label="Main navigation">
-        <a class="wordmark" href="#top" aria-label="Zuna home"><span class="wordmark-mark">z</span>una</a>
-        <span class="privacy-pill"><span class="status-dot"></span> your book stays on your device</span>
-      </nav>
+    <div class="app-frame">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <a class="wordmark" href="#top" aria-label="Zuna home"><span class="wordmark-mark">z</span><span>una</span></a>
+        <nav class="nav-links">
+          <a class="nav-link is-active" href="#top"><span class="nav-icon">⌂</span>Home</a>
+          <a class="nav-link" href="#library"><span class="nav-icon">▱</span>Library</a>
+          <a class="nav-link" href="#narrators"><span class="nav-icon">◌</span>Narrators</a>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="privacy-note"><span class="status-dot"></span><span><strong>Private by design</strong><br />Your books stay on this device.</span></div>
+          <button class="nav-link nav-button" id="settingsButton" type="button"><span class="nav-icon">⌘</span>Settings</button>
+        </div>
+      </aside>
 
-      <section class="hero" id="top">
-        <p class="eyebrow">A private reading companion</p>
-        <h1>Your books,<br /><em>given a voice</em><br />worth listening to.</h1>
-        <p class="hero-description">Upload a readable book. Choose a narrator. Start listening.</p>
-      </section>
+      <main class="main-content" id="top">
+        <header class="topbar">
+          <div class="mobile-brand"><span class="wordmark-mark">z</span><span>una</span></div>
+          <div class="topbar-meta"><span class="saved-state"><span class="status-dot"></span>saved locally</span><button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false"><span id="themeIcon">☼</span></button></div>
+        </header>
 
-      <section class="listen-panel" aria-labelledby="listen-title">
-        <div class="section-heading">
-          <div><p class="eyebrow">01 / Upload</p><h2 id="listen-title">Start with a document.</h2></div>
-          <span class="local-tag">processed locally</span>
-        </div>
-        <label class="drop-zone" id="dropZone" for="pdfInput">
-          <input id="pdfInput" type="file" accept="application/pdf,.txt,text/plain" />
-          <span class="drop-icon">↥</span>
-          <span class="drop-title">Drop a book here</span>
-          <span class="drop-subtitle">or choose a file from your device</span>
-        </label>
-        <div class="file-status" id="libraryPanel" hidden>
-          <span class="file-icon">▤</span><div><span class="mini-label">READY TO LISTEN</span><h3 id="fileName">Your document</h3><p id="fileMeta">0 passages · local only</p></div>
-          <button class="text-button" id="clearButton" type="button">Change file ↗</button>
-        </div>
-      </section>
+        <div class="content-wrap">
+          <section class="hero" aria-labelledby="welcome-title">
+            <div>
+              <p class="eyebrow">A slower kind of screen time</p>
+              <h1 id="welcome-title">Make a little room<br />for a <em>good story.</em></h1>
+              <p class="hero-description">Zuna turns your own books into something you can listen to, quietly and completely.</p>
+            </div>
+            <div class="hero-orbit" aria-hidden="true"><span class="orbit-ring"></span><span class="orbit-dot"></span><span class="orbit-label">read<br />listen<br />return</span></div>
+          </section>
 
-      <section class="listen-panel voice-panel" aria-labelledby="voice-title">
-        <div class="section-heading">
-          <div><p class="eyebrow">02 / Narrator</p><h2 id="voice-title">Choose a voice.</h2></div>
-          <span class="local-tag">no account needed</span>
-        </div>
-        <div class="narrator-grid" role="radiogroup" aria-label="Choose a narrator">
-          <button class="narrator-card is-selected" data-narrator="elias" type="button" role="radio" aria-checked="true">
-            <span class="narrator-number">01</span><span class="voice-wave wave-deep"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-            <span class="narrator-name">Elias</span><span class="narrator-role">The theatrical narrator</span>
-            <span class="narrator-description">Warm, wise, expressive long-form delivery.</span>
-            <span class="card-check">✓</span>
-          </button>
-          <button class="narrator-card" data-narrator="mira" type="button" role="radio" aria-checked="false">
-            <span class="narrator-number">02</span><span class="voice-wave wave-warm"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-            <span class="narrator-name">Mira</span><span class="narrator-role">The intimate storyteller</span>
-            <span class="narrator-description">Textured, gentle, and quietly confident.</span>
-            <span class="card-check">✓</span>
-          </button>
-        </div>
-      </section>
+          <section class="continue-card" aria-labelledby="continue-title">
+            <div class="continue-art" aria-hidden="true"><img src="assets/zuna-frame-4k.webp" alt="" /><span class="art-wash"></span><span class="art-caption">a voice<br />worth<br />listening to</span></div>
+            <div class="continue-copy">
+              <p class="eyebrow">Your listening room</p>
+              <h2 id="continue-title">Start with something<br /><em>worth finishing.</em></h2>
+              <p>Bring a book you already love. Zuna keeps it close, finds a natural place to begin, and lets you settle in.</p>
+              <a class="quiet-link" href="#library">Open your library <span>↗</span></a>
+            </div>
+            <div class="continue-mark" aria-hidden="true">✳</div>
+          </section>
 
-      <section class="player" id="player" aria-label="Zuna audio player">
-        <div class="player-topline"><span id="nowPlayingLabel">Choose a document to begin</span><span id="progressLabel">0 / 0</span></div>
-        <div class="passage" id="passage" aria-live="polite"><span class="passage-placeholder">Your current passage will appear here.</span></div>
-        <div class="player-controls">
-          <button class="play-button" id="playButton" type="button" aria-label="Play">▶</button>
-          <button class="small-control" id="backButton" type="button" aria-label="Previous passage">↶</button>
-          <button class="small-control" id="forwardButton" type="button" aria-label="Next passage">↷</button>
-          <input class="seek" id="seek" type="range" min="0" max="0" value="0" aria-label="Passage position" />
-          <select class="speed-select" id="speedSelect" aria-label="Playback speed"><option value="0.85">0.85×</option><option value="1" selected>1×</option><option value="1.15">1.15×</option><option value="1.3">1.3×</option></select>
+          <section class="library-section" id="library" aria-labelledby="library-title">
+            <div class="section-heading">
+              <div><p class="eyebrow">01 / Your library</p><h2 id="library-title">A quiet shelf for<br /><em>the good ones.</em></h2></div>
+              <span class="section-note">local only · no account needed</span>
+            </div>
+            <label class="drop-zone" id="dropZone" for="pdfInput">
+              <input id="pdfInput" type="file" accept="application/pdf,.txt,text/plain" />
+              <span class="drop-symbol">＋</span>
+              <span class="drop-title">Bring in a book</span>
+              <span class="drop-subtitle">PDF or TXT · it never leaves your device</span>
+            </label>
+            <div class="file-status" id="libraryPanel" hidden>
+              <span class="file-icon">▱</span><div><span class="mini-label">READY TO LISTEN</span><h3 id="fileName">Your document</h3><p id="fileMeta">0 passages · local only</p></div>
+              <button class="text-button" id="clearButton" type="button">Change book <span>↗</span></button>
+            </div>
+          </section>
+
+          <section class="narrator-section" id="narrators" aria-labelledby="voice-title">
+            <div class="section-heading">
+              <div><p class="eyebrow">02 / The room tone</p><h2 id="voice-title">Choose a narrator.</h2></div>
+              <span class="section-note">browser voices · processed locally</span>
+            </div>
+            <div class="narrator-grid" role="radiogroup" aria-label="Choose a narrator">
+              <button class="narrator-card is-selected" data-narrator="elias" type="button" role="radio" aria-checked="true">
+                <span class="narrator-top"><span class="narrator-number">01</span><span class="voice-wave wave-deep" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span>
+                <span class="narrator-name">Elias</span><span class="narrator-role">The theatrical narrator</span>
+                <span class="narrator-description">Warm, wise, expressive long-form delivery.</span><span class="card-check" aria-hidden="true">✓</span>
+              </button>
+              <button class="narrator-card" data-narrator="mira" type="button" role="radio" aria-checked="false">
+                <span class="narrator-top"><span class="narrator-number">02</span><span class="voice-wave wave-warm" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span>
+                <span class="narrator-name">Mira</span><span class="narrator-role">The intimate storyteller</span>
+                <span class="narrator-description">Textured, gentle, and quietly confident.</span><span class="card-check" aria-hidden="true">✓</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="player" id="player" aria-label="Zuna audio player">
+            <div class="player-topline"><span id="nowPlayingLabel">Choose a document to begin</span><span id="progressLabel">0 / 0</span></div>
+            <div class="passage" id="passage" aria-live="polite"><span class="passage-placeholder">Your current passage will appear here.</span></div>
+            <div class="player-controls">
+              <button class="play-button" id="playButton" type="button" aria-label="Play">▶</button>
+              <button class="small-control" id="backButton" type="button" aria-label="Previous passage">↶</button>
+              <button class="small-control" id="forwardButton" type="button" aria-label="Next passage">↷</button>
+              <input class="seek" id="seek" type="range" min="0" max="0" value="0" aria-label="Passage position" />
+              <select class="speed-select" id="speedSelect" aria-label="Playback speed"><option value="0.85">0.85×</option><option value="1" selected>1×</option><option value="1.15">1.15×</option><option value="1.3">1.3×</option></select>
+            </div>
+          </section>
+          <p class="engine-note" id="engineNote">Browser speech narration · processed locally on your device.</p>
+          <footer class="footer"><span>zuna / a private reading companion</span><span>Built for the things worth finishing.</span></footer>
         </div>
-      </section>
-      <p class="engine-note" id="engineNote">Browser speech narration · processed locally on your device.</p>
-      <footer class="footer"><span>zuna / a private reading companion</span><span>Built for the things worth finishing.</span></footer>
-    </main>
+      </main>
+    </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="app.js" type="module"></script>
   </body>

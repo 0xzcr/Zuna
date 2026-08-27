@@ -7,6 +7,7 @@ const state = {
   speed: Number(localStorage.getItem('zuna-speed') || 1),
   fileName: localStorage.getItem('zuna-file-name') || '',
   speaking: false,
+  theme: localStorage.getItem('zuna-theme') || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -19,6 +20,22 @@ const playButton = $('#playButton');
 const toast = $('#toast');
 const engineNote = $('#engineNote');
 let extractionId = 0;
+
+function applyTheme(theme) {
+  state.theme = theme;
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem('zuna-theme', theme);
+  const toggle = $('#themeToggle');
+  const icon = $('#themeIcon');
+  if (toggle) {
+    toggle.setAttribute('aria-pressed', String(theme === 'dark'));
+    toggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+  }
+  if (icon) icon.textContent = theme === 'dark' ? '☾' : '☼';
+}
+
+applyTheme(state.theme);
+$('#themeToggle')?.addEventListener('click', () => applyTheme(state.theme === 'dark' ? 'light' : 'dark'));
 
 function notify(message) {
   toast.textContent = message;
@@ -51,6 +68,7 @@ function setDocument(text, name) {
   localStorage.setItem('zuna-file-name', name);
   $('#fileName').textContent = name;
   $('#fileMeta').textContent = `${state.passages.length} passages · local only`;
+  $('#nowPlayingLabel').textContent = name;
   libraryPanel.hidden = false;
   seek.max = Math.max(0, state.passages.length - 1);
   seek.value = state.index;
@@ -62,6 +80,7 @@ function setDocument(text, name) {
 function appendDocument(text, page, pageCount) {
   state.passages.push(...splitIntoPassages(cleanText(text)));
   $('#fileMeta').textContent = `${state.passages.length} passages · reading page ${page} / ${pageCount} · local only`;
+  $('#nowPlayingLabel').textContent = state.fileName;
   seek.max = Math.max(0, state.passages.length - 1);
 }
 
