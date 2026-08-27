@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { MovingBorder, Spotlight } from './aceternity';
 
 function Wordmark({ mobile = false }) {
   return <a className={mobile ? 'mobile-brand' : 'wordmark'} href="#home" aria-label="Zuna home"><span className="wordmark-mark">z</span><span>una</span></a>;
@@ -17,7 +18,6 @@ function Navigation() {
         <a className="nav-link" href="#narrators" data-nav="narrators"><span className="nav-icon">◌</span>Narrators</a>
       </nav>
       <div className="sidebar-bottom">
-        <a className="zuna-plus" href="#membership"><span className="plus-mark">+</span><span><strong>Zuna+</strong><br /><small>More ways to listen</small></span><span className="arrow">↗</span></a>
         <div className="privacy-note"><span className="status-dot" /><span><strong>Private by design</strong><br />Your books stay on this device.</span></div>
         <button className="nav-link nav-button" id="settingsButton" type="button"><span className="nav-icon">⌘</span>Settings</button>
       </div>
@@ -27,18 +27,11 @@ function Navigation() {
 
 function Hero() {
   return (
-    <>
-      <section className="hero" aria-labelledby="welcome-title">
-        <div className="hero-copy"><p className="eyebrow">A quieter way to read</p><h1 id="welcome-title">Your books,<br />with a <em>voice.</em></h1><p className="hero-description">Zuna turns the books you already own into listening sessions that feel close, calm, and entirely yours.</p><div className="hero-actions"><a className="primary-button" href="#library">Bring in a book <span>↗</span></a><a className="text-link" href="#about">Why Zuna <span>↓</span></a></div></div>
-        <div className="hero-orbit" aria-hidden="true"><span className="orbit-ring orbit-ring-one" /><span className="orbit-ring orbit-ring-two" /><span className="orbit-dot" /><span className="orbit-label">read<br />listen<br />return</span></div>
-      </section>
-      <section className="continue-card" aria-labelledby="continue-title">
-        <div className="continue-art" aria-hidden="true"><img src="/assets/zuna-frame-4k.webp" alt="" width="768" height="1024" /><span className="art-wash" /><span className="art-caption">a voice<br />worth<br />returning to</span><span className="art-index">01</span></div>
-        <div className="continue-copy"><p className="eyebrow">Your listening room</p><h2 id="continue-title">Start with something<br /><em>worth finishing.</em></h2><p>Bring a book you already love. Zuna keeps it close, finds a natural place to begin, and lets you settle in.</p><a className="quiet-link" href="#library">Open your library <span>↗</span></a></div>
-        <div className="continue-mark" aria-hidden="true">✳</div>
-      </section>
-      <section className="promise-strip" id="about" aria-label="Zuna promises"><div><span className="strip-number">01</span><strong>Local first</strong><span>Books stay on your device.</span></div><div><span className="strip-number">02</span><strong>Start sooner</strong><span>Listen while the rest loads.</span></div><div><span className="strip-number">03</span><strong>Make it yours</strong><span>Choose the voice that fits.</span></div></section>
-    </>
+    <section className="hero" aria-labelledby="welcome-title">
+      <Spotlight />
+      <div className="hero-copy"><p className="eyebrow">Local audiobook studio</p><h1 id="welcome-title">Your books,<br />ready to <em>listen.</em></h1><p className="hero-description">Import a PDF, EPUB, or text file, choose any local Kokoro voice, and start listening while the remaining chapters generate.</p><div className="hero-actions"><a className="primary-button" href="#library">Choose a book <span>↗</span></a><a className="text-link" href="#narrators">Browse voices <span>↓</span></a></div></div>
+      <MovingBorder className="workflow-card"><span className="mini-label">AVAILABLE NOW</span><strong>Private listening, end to end.</strong><ul><li>Books saved on this device</li><li>54 free Kokoro voices</li><li>Background chapter generation</li></ul></MovingBorder>
+    </section>
   );
 }
 
@@ -55,7 +48,6 @@ function ReaderSections() {
         <div className="section-heading"><div><p className="eyebrow">02 / The room tone</p><h2 id="voice-title">Choose a narrator.</h2></div><span className="section-note">Kokoro · all voices free</span></div>
         <div className="voice-picker"><label className="voice-select-label" htmlFor="voiceSelect"><span className="mini-label">VOICE</span><span className="voice-select-shell"><select id="voiceSelect" aria-label="Choose a Kokoro narrator" disabled defaultValue=""><option value="">Connecting to local runtime…</option></select><span className="select-chevron" aria-hidden="true">⌄</span></span></label><span className="voice-count" id="voiceCount">Connecting to local runtime…</span></div>
       </section>
-      <section className="membership-card" id="membership" aria-labelledby="membership-title"><div><p className="eyebrow">A little more room</p><h2 id="membership-title">Listen in your<br /><em>own rhythm.</em></h2></div><div className="membership-copy"><p>Zuna+ will bring gentle reading stats and more room for the books you want to hear. Every local Kokoro voice stays free.</p><button className="outline-button" id="membershipButton" type="button">Keep me posted <span>↗</span></button></div></section>
     </>
   );
 }
