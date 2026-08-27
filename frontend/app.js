@@ -1,5 +1,5 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
-import { buildChapterMap, chapterGenerationOrder, clampProgress, textItemsToText } from './reader-core.mjs?v=8';
+import { buildChapterMap, chapterGenerationOrder, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=9';
 import { KOKORO_BASE_URL, normalizeVoices, groupVoices, synthesisPayload } from './kokoro-runtime.mjs?v=7';
 import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook } from './local-cache.mjs';
 
@@ -14,7 +14,7 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const pdfInput = $('#pdfInput'); const dropZone = $('#dropZone'); const libraryPanel = $('#libraryPanel');
 const passage = $('#passage'); const seek = $('#seek'); const playButton = $('#playButton'); const toast = $('#toast'); const engineNote = $('#engineNote');
-const audioCache = new Map(); const audioJobs = new Map(); let activeAudio = null; let playbackRun = 0; let generationRun = 0; let extractionId = 0;
+const audioCache = new Map(); const audioJobs = new Map(); let activeAudio = null; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0;
 
 function applyTheme(theme) {
   state.theme = theme; document.documentElement.dataset.theme = theme; localStorage.setItem('zuna-theme', theme);
@@ -85,7 +85,16 @@ function setDocument(text, name, complete = true, bookKey = state.bookKey) {
   document.querySelector('.player')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); notify(`${state.chapters.length || 1} chapters ready to choose.`); if (complete) startBackgroundGeneration(); else warmCurrentPassage();
 }
 
-function appendDocument(text, page, pageCount) { state.sourceText += `\n${text}`; state.documentComplete = page === pageCount; state.generationStatus = state.documentComplete ? 'Narration queued in the background.' : 'Finding chapters as pages load…'; applyChapterMap(true); $('#fileMeta').textContent = `${state.chapters.length} chapters · ${state.passages.length} passages · reading page ${page} / ${pageCount}`; if (state.documentComplete) startBackgroundGeneration(); }
+function appendDocument(text, page, pageCount) {
+  state.sourceText += `\n\n${text}`; state.generationStatus = 'Finding chapters as pages load…';
+  if (page - lastMappedPdfPage >= 16) { lastMappedPdfPage = page; applyChapterMap(true); }
+  $('#fileMeta').textContent = `${state.chapters.length} chapters · ${state.passages.length} passages · reading page ${page} / ${pageCount}`;
+}
+function finishDocument(text, name, key) {
+  if (state.bookKey !== key) { setDocument(text, name, true, key); return; }
+  generationRun += 1; lastMappedPdfPage = 0; state.sourceText = text; state.documentComplete = true; state.generationStatus = 'Narration queued in the background.'; applyChapterMap(true);
+  $('#fileMeta').textContent = `${state.chapters.length} chapters · ${state.passages.length} passages · local only`; startBackgroundGeneration();
+}
 function renderPassage() { const current = state.passages[state.index]; state.chapterIndex = current ? chapterForPassage(state.index) : state.chapterIndex; const chapter = state.chapters[state.chapterIndex]; $('#chapterSelect').value = String(state.chapterIndex); $('#nowPlayingLabel').textContent = state.fileName ? `${state.fileName} · ${chapter?.title || 'Full book'}` : 'Choose a document to begin'; $('#progressLabel').textContent = state.passages.length ? `${state.index + 1} / ${state.passages.length}` : '0 / 0'; seek.value = state.index; if (!current) { passage.innerHTML = '<span class="passage-placeholder">Your current passage will appear here.</span>'; return; } passage.textContent = current; localStorage.setItem(`zuna-progress:${state.fileName}`, String(state.index)); }
 
 function setPlayState(playing) { state.speaking = playing; playButton.textContent = playing ? 'Ⅱ' : '▶'; playButton.setAttribute('aria-label', playing ? 'Pause' : 'Play'); playButton.setAttribute('aria-pressed', String(playing)); }
@@ -139,8 +148,28 @@ async function togglePlayback() {
 }
 
 async function extractPdf(file, key) {
-  const currentExtraction = ++extractionId; notify('Reading your book locally…'); const pdfjs = await import('pdfjs-dist/build/pdf.mjs'); pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'; const pdfDocument = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise; let firstBatch = true;
-  await processPagesInBatches(pdfDocument.numPages, async (pageNumber) => { const page = await pdfDocument.getPage(pageNumber); const content = await page.getTextContent(); return textItemsToText(content.items); }, (pages, pageNumber, pageCount) => { if (currentExtraction !== extractionId) return false; if (firstBatch) { firstBatch = false; setDocument(pages.join('\n'), file.name, pageNumber === pageCount, key); } else appendDocument(pages.join('\n'), pageNumber, pageCount); if (pageNumber === pageCount) { cacheBook(key, { text: state.sourceText, name: file.name }); notify(`${state.chapters.length} chapters ready to listen.`); } return true; }, 4);
+  const currentExtraction = ++extractionId; notify('Reading your book locally…'); const pdfjs = await import('pdfjs-dist/build/pdf.mjs'); pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+  const loadingTask = pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }); let passwordCancelled = false; let pdfDocument;
+  loadingTask.onPassword = (updatePassword) => { const password = window.prompt('This PDF is password protected. Enter its password to open it locally:'); if (password === null) { passwordCancelled = true; loadingTask.destroy(); } else updatePassword(password); };
+  try {
+    try { pdfDocument = await loadingTask.promise; } catch (error) { if (passwordCancelled) throw new Error('The password-protected PDF was not opened.'); throw error; }
+    const extractedPages = []; let started = false;
+    await processPagesInBatches(pdfDocument.numPages, async (pageNumber) => {
+      const page = await pdfDocument.getPage(pageNumber);
+      try { const content = await page.getTextContent({ includeMarkedContent: false, disableNormalization: false }); return textItemsToText(content.items); }
+      finally { page.cleanup(); }
+    }, (pages, pageNumber, pageCount) => {
+      if (currentExtraction !== extractionId) return false;
+      extractedPages.push(...pages); const batchText = pages.join('\n\n');
+      if (!started && hasReadableText(batchText)) { started = true; lastMappedPdfPage = pageNumber; setDocument(extractedPages.join('\n\n'), file.name, false, key); }
+      else if (started) appendDocument(batchText, pageNumber, pageCount);
+      return true;
+    }, 4);
+    if (currentExtraction !== extractionId) return;
+    const text = normalizePdfPages(extractedPages);
+    if (!hasReadableText(text)) throw new Error('No selectable text was found. This looks like a scanned PDF and needs OCR.');
+    finishDocument(text, file.name, key); await cacheBook(key, { text, name: file.name }); notify(`${state.chapters.length} chapters ready to listen.`);
+  } finally { try { await pdfDocument?.cleanup(); } finally { await loadingTask.destroy(); } }
 }
 
 async function handleFile(file) {
@@ -148,7 +177,7 @@ async function handleFile(file) {
   if (cached?.text) { extractionId += 1; setDocument(cached.text, cached.name || file.name, true, key); notify('Opened instantly from your private cache.'); return; }
   const name = file.name.toLowerCase();
   try {
-    if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = await file.text(); setDocument(text, file.name, true, key); cacheBook(key, { text, name: file.name }); }
+    if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = decodePlainText(await file.arrayBuffer()); if (!hasReadableText(text)) throw new Error('This text file does not contain readable book text.'); setDocument(text, file.name, true, key); await cacheBook(key, { text, name: file.name }); }
     else if (file.type === 'application/pdf' || name.endsWith('.pdf')) await extractPdf(file, key);
     else if (file.type === 'application/epub+zip' || name.endsWith('.epub')) { extractionId += 1; notify('Opening EPUB chapters locally…'); const { extractEpub } = await import('./epub.mjs'); const book = await extractEpub(await file.arrayBuffer()); setDocument(book.text, book.title || file.name, true, key); cacheBook(key, { text: book.text, name: book.title || file.name }); }
     else notify('Please choose a readable PDF, EPUB, or TXT book.');

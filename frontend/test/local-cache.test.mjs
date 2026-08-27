@@ -9,6 +9,10 @@ test('book cache keys distinguish changed files with the same name', () => {
   );
 });
 
+test('book cache keys carry the current extraction format version', () => {
+  assert.match(bookStorageKey({ name: 'novel.pdf', size: 1200, lastModified: 1 }), /^book-v2:/);
+});
+
 test('audio cache keys distinguish text, voice, speed, and book', () => {
   const first = audioStorageKey({ bookKey: 'book-a', index: 0, voice: 'af_heart', speed: 1, text: 'One.' });
   assert.notEqual(first, audioStorageKey({ bookKey: 'book-b', index: 0, voice: 'af_heart', speed: 1, text: 'One.' }));

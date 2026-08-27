@@ -11,7 +11,7 @@ function hashText(text) {
 }
 
 export function bookStorageKey(file) {
-  return `${file.name}:${file.size}:${file.lastModified}`;
+  return `book-v2:${file.name}:${file.size}:${file.lastModified}`;
 }
 
 export function audioStorageKey({ bookKey, index, voice, speed, text }) {

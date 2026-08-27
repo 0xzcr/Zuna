@@ -9,9 +9,11 @@ Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 ## Current status
 
 - Rebuilt the responsive website shell with a calm, private listening-room experience.
-- Supports EPUB, PDFs with an extractable text layer, and plain-text files.
+- Supports EPUB, PDFs with an extractable text layer, and UTF-8, UTF-16, or Windows-1252 plain-text files.
 - Extracts PDF text in bounded four-page batches and can begin playback before the whole file
   is processed.
+- Reconstructs fragmented PDF words, removes repeated page headers and footers, repairs wrapped
+  hyphenation, and reports image-only PDFs that require OCR.
 - Detects common chapter headings, skips front matter on first play, and lets readers jump to
   any chapter while the remaining Kokoro narration generates sequentially in the background.
 - Provides all 54 local Kokoro voices, playback controls, local resume state, seeking, playback

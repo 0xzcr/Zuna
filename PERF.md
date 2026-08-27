@@ -10,8 +10,10 @@ Measurements were taken locally on 2026-08-27. Re-run them after pipeline or dep
 | Cold short Kokoro synthesis | Not available in baseline | 1.84 s | Passes the 30–45 s first-audio budget |
 | Cached book reopen in a real browser | Not supported | 21 ms | Kept |
 | Cached audio play interaction in a real browser | Not supported | 402 ms including automation overhead | Kept |
+| Repeated chapter-map work for a synthetic 1,000-page PDF | 2,918 ms at every 4 pages | 720 ms at every 16 pages | Kept: 75% less main-thread work |
 | Initial production JavaScript | 17.6 KB raw legacy app JS | 177 KB gzip Next.js/React | Accepted framework cost; under 200 KB budget |
 
 The first narration chunk targets 280 characters, later chunks target 900, and no chunk exceeds
-1,200 characters. PDF extraction publishes four pages at a time. PDF.js and EPUB decompression are
-loaded only when their file type is selected.
+1,200 characters. PDF extraction reads four pages at a time, publishes the first readable batch
+immediately, then refreshes chapter discovery every sixteen pages. PDF.js and EPUB decompression
+are loaded only when their file type is selected.
