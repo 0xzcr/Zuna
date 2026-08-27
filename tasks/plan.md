@@ -1,4 +1,4 @@
-# Implementation Plan: Zuna rebuild
+# Implementation Plan: Zuna rebuild and Next.js migration
 
 ## Overview
 
@@ -62,3 +62,23 @@ Rebuild Zuna as a guest-first, local-first audiobook reader with a polished web 
 - Backend persistence choice for production deployment.
 - Current Sarvam pricing/rate limits and Dodo credit primitives.
 - Region-specific external checkout vs. IAP routing.
+
+## Next.js web migration
+
+- Replace the Python static website server with a Next.js App Router application while keeping
+  the local Kokoro process as a private sidecar.
+- Proxy Kokoro through same-origin Route Handlers so browser security and deployment boundaries
+  remain explicit.
+- Preserve the existing visual language and reader behavior; migrate one working vertical slice
+  at a time rather than maintaining two active web implementations.
+- Reduce time-to-first-audio with bounded narration chunks, selected-chapter-first generation,
+  and next-chunk prefetch. Persist generated WAV blobs in IndexedDB so revisits are instant.
+- Keep PDF.js out of the initial bundle and load it only after a PDF is selected.
+
+### Migration tasks
+
+- [ ] Add the minimal Next.js App Router shell and Kokoro Route Handlers.
+- [ ] Move document parsing, chapter detection, chunking, and cache keys into tested modules.
+- [ ] Port the responsive Zuna reader UI and connect the optimized pipeline.
+- [ ] Verify build, tests, Kokoro integration, responsive UI, and performance budgets.
+- [ ] Retire the legacy static server after the Next.js replacement passes all gates.

@@ -22,3 +22,11 @@
 - [ ] Phase 2 Sarvam wallet generation and Dodo checkout.
 - [ ] Phase 3 Zuna+, cloning, and Tier 2 chapter detection.
 - [ ] Phase 4 polish and production verification.
+
+## Next.js migration
+
+- [ ] Next.js App Router serves the Zuna experience at `/`.
+- [ ] Same-origin Route Handlers stream voices and synthesis from local Kokoro.
+- [ ] PDF/TXT import, chapters, all free voices, playback, and background generation work.
+- [ ] Narration uses bounded chunks and persistent IndexedDB audio caching.
+- [ ] Tests, production build, browser checks, and performance checks pass.

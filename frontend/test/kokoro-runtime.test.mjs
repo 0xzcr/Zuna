@@ -3,7 +3,7 @@ import test from 'node:test';
 import { KOKORO_BASE_URL, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey } from '../kokoro-runtime.mjs';
 
 test('routes Kokoro through the same-origin web server', () => {
-  assert.equal(KOKORO_BASE_URL, '/kokoro');
+  assert.equal(KOKORO_BASE_URL, '/api/kokoro');
 });
 
 test('normalizes the Kokoro voice list and keeps every valid voice', () => {
