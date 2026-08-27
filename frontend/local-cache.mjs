@@ -1,4 +1,5 @@
 const DATABASE = 'zuna-local-v1';
+const DATABASE_VERSION = 2;
 let databasePromise;
 
 function hashText(text) {
@@ -18,13 +19,28 @@ export function audioStorageKey({ bookKey, index, voice, speed, text }) {
   return `${bookKey}:${index}:${voice}:${speed}:${hashText(text)}`;
 }
 
+export function sortCachedBooks(books) {
+  return [...books].sort((left, right) => (right.savedAt || 0) - (left.savedAt || 0));
+}
+
 function openDatabase() {
   if (typeof indexedDB === 'undefined') return Promise.reject(new Error('IndexedDB unavailable'));
   databasePromise ||= new Promise((resolve, reject) => {
-    const request = indexedDB.open(DATABASE, 1);
+    const request = indexedDB.open(DATABASE, DATABASE_VERSION);
     request.onupgradeneeded = () => {
-      request.result.createObjectStore('books');
-      request.result.createObjectStore('audio');
+      const database = request.result;
+      if (!database.objectStoreNames.contains('books')) database.createObjectStore('books');
+      if (!database.objectStoreNames.contains('audio')) database.createObjectStore('audio');
+      if (!database.objectStoreNames.contains('bookIndex')) {
+        const bookIndex = database.createObjectStore('bookIndex');
+        const cursor = request.transaction.objectStore('books').openCursor();
+        cursor.onsuccess = () => {
+          const entry = cursor.result;
+          if (!entry) return;
+          bookIndex.put({ key: entry.key, name: entry.value?.name || 'Saved book', savedAt: entry.value?.savedAt || 0 }, entry.key);
+          entry.continue();
+        };
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -59,8 +75,39 @@ async function write(store, key, value) {
   }
 }
 
+async function writeBook(key, book) {
+  try {
+    const database = await openDatabase();
+    const value = { ...book, savedAt: book.savedAt || Date.now() };
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction(['books', 'bookIndex'], 'readwrite');
+      transaction.objectStore('books').put(value, key);
+      transaction.objectStore('bookIndex').put({ key, name: value.name || 'Saved book', savedAt: value.savedAt }, key);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readAll(store) {
+  try {
+    const database = await openDatabase();
+    return await new Promise((resolve, reject) => {
+      const request = database.transaction(store).objectStore(store).getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return [];
+  }
+}
+
 export const getCachedBook = (key) => read('books', key);
-export const cacheBook = (key, book) => write('books', key, book);
+export const cacheBook = (key, book) => writeBook(key, book);
+export const listCachedBooks = async () => sortCachedBooks(await readAll('bookIndex'));
 export const getCachedAudio = async (key) => (await read('audio', key))?.blob || null;
 export const cacheAudio = (key, blob) => write('audio', key, { blob, createdAt: Date.now() });
 

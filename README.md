@@ -15,9 +15,11 @@ Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 - Reconstructs fragmented PDF words, removes repeated page headers and footers, repairs wrapped
   hyphenation, and reports image-only PDFs that require OCR.
 - Detects common chapter headings, skips front matter on first play, and lets readers jump to
-  any chapter while the remaining Kokoro narration generates sequentially in the background.
+  any chapter from a swipeable card rail while the remaining Kokoro narration generates
+  sequentially in the background. Each card shows its own voice-generation progress.
 - Provides all 54 local Kokoro voices, playback controls, local resume state, seeking, playback
-  speed, settings, and theme controls. Generated audio and extracted books are cached in IndexedDB.
+  speed, settings, and theme controls. A private saved-book shelf reopens locally cached books
+  without another import; generated audio and extracted books are cached in IndexedDB.
 - Keeps document text and playback state on the device. There is no login, database, upload
   API, or server-side book processing.
 - Uses the local Kokoro runtime; document text is not sent to a hosted narration provider.

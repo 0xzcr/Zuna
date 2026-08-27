@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { audioStorageKey, bookStorageKey } from '../local-cache.mjs';
+import { audioStorageKey, bookStorageKey, sortCachedBooks } from '../local-cache.mjs';
 
 test('book cache keys distinguish changed files with the same name', () => {
   assert.notEqual(
@@ -11,6 +11,14 @@ test('book cache keys distinguish changed files with the same name', () => {
 
 test('book cache keys carry the current extraction format version', () => {
   assert.match(bookStorageKey({ name: 'novel.pdf', size: 1200, lastModified: 1 }), /^book-v2:/);
+});
+
+test('saved books are ordered by most recently added', () => {
+  assert.deepEqual(sortCachedBooks([
+    { key: 'older', savedAt: 10 },
+    { key: 'newer', savedAt: 30 },
+    { key: 'middle', savedAt: 20 },
+  ]).map((book) => book.key), ['newer', 'middle', 'older']);
 });
 
 test('audio cache keys distinguish text, voice, speed, and book', () => {

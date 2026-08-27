@@ -86,6 +86,13 @@ export function chapterGenerationOrder(chapters, selectedChapterIndex = 0) {
   });
 }
 
+export function chapterProgress(chapter, readyPassages) {
+  const total = Math.max(0, chapter.endIndex - chapter.startIndex + 1);
+  let ready = 0;
+  for (let index = chapter.startIndex; index <= chapter.endIndex; index += 1) if (readyPassages.has(index)) ready += 1;
+  return { ready, total, percent: total ? Math.round(ready / total * 100) : 0 };
+}
+
 export function textItemsToText(items) {
   let output = '';
   let previous;

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   buildChapterMap,
   chapterGenerationOrder,
+  chapterProgress,
   cleanText,
   decodePlainText,
   hasReadableText,
@@ -36,6 +37,15 @@ test('generates the selected chapter before the rest of the book', () => {
   const book = buildChapterMap(`Chapter 1\nOne. Two.\nChapter 2\nThree. Four.`);
 
   assert.deepEqual(chapterGenerationOrder(book.chapters, 1), [2, 3, 0, 1]);
+});
+
+test('reports bounded voice-generation progress for each chapter', () => {
+  assert.deepEqual(chapterProgress({ startIndex: 3, endIndex: 6 }, new Set([3, 5, 99])), {
+    ready: 2,
+    total: 4,
+    percent: 50,
+  });
+  assert.deepEqual(chapterProgress({ startIndex: 2, endIndex: 1 }, new Set()), { ready: 0, total: 0, percent: 0 });
 });
 
 test('prepares following chapters before earlier front matter', () => {

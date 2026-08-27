@@ -1,14 +1,14 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
-import { buildChapterMap, chapterGenerationOrder, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=9';
+import { buildChapterMap, chapterGenerationOrder, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=10';
 import { KOKORO_BASE_URL, normalizeVoices, groupVoices, synthesisPayload } from './kokoro-runtime.mjs?v=7';
-import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook } from './local-cache.mjs';
+import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook, listCachedBooks } from './local-cache.mjs';
 
 const state = {
   chapters: [], passages: [], index: 0, chapterIndex: 0, sourceText: '', documentComplete: false, generationStatus: 'Import a book to prepare its chapters.',
   voice: localStorage.getItem('zuna-kokoro-voice') || '',
   speed: Number(localStorage.getItem('zuna-speed') || 1), fileName: localStorage.getItem('zuna-file-name') || '',
   speaking: false, theme: localStorage.getItem('zuna-theme') || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-  kokoroVoices: [], kokoroOnline: false, bookKey: '',
+  kokoroVoices: [], kokoroOnline: false, bookKey: '', savedBooks: [], readyPassages: new Set(), generatingChapterIndex: -1,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -65,12 +65,42 @@ async function loadKokoroVoices() {
 
 function chapterForPassage(index) { return Math.max(0, state.chapters.findIndex((chapter) => index >= chapter.startIndex && index <= chapter.endIndex)); }
 function setChapterStatus(message) { state.generationStatus = message; const status = $('#chapterStatus'); if (status) status.textContent = message; }
-function renderChapterPicker() {
-  const select = $('#chapterSelect'); if (!select) return; select.replaceChildren();
-  if (!state.chapters.length) { const option = document.createElement('option'); option.textContent = 'Choose a book first…'; select.append(option); select.disabled = true; setChapterStatus(state.generationStatus); return; }
-  state.chapters.forEach((chapter, index) => { const option = document.createElement('option'); option.value = String(index); option.textContent = chapter.title; select.append(option); });
-  select.disabled = false; select.value = String(state.chapterIndex); setChapterStatus(state.generationStatus);
+function updateChapterCard(index) {
+  const card = document.querySelector(`[data-chapter-index="${index}"]`); const chapter = state.chapters[index]; if (!card || !chapter) return;
+  const progress = chapterProgress(chapter, state.readyPassages); const meter = card.querySelector('progress'); const label = card.querySelector('.chapter-card-progress');
+  meter.value = progress.ready; meter.max = Math.max(1, progress.total); meter.setAttribute('aria-valuetext', `${progress.ready} of ${progress.total} passages ready`);
+  label.textContent = progress.percent === 100 ? 'Ready to play' : state.generatingChapterIndex === index ? `${progress.percent}% · generating` : `${progress.percent}% ready`;
+  card.classList.toggle('is-ready', progress.percent === 100); card.classList.toggle('is-generating', state.generatingChapterIndex === index);
 }
+function updateChapterSelection(scroll = false) {
+  document.querySelectorAll('[data-chapter-index]').forEach((card) => { const selected = Number(card.dataset.chapterIndex) === state.chapterIndex; card.classList.toggle('is-selected', selected); card.setAttribute('aria-pressed', String(selected)); if (selected && scroll) card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); });
+}
+function renderChapterPicker() {
+  const rail = $('#chapterRail'); if (!rail) return; rail.replaceChildren();
+  if (!state.chapters.length) { const empty = document.createElement('span'); empty.className = 'chapter-empty'; empty.textContent = 'Choose a book first…'; rail.append(empty); setChapterStatus(state.generationStatus); return; }
+  state.chapters.forEach((chapter, index) => {
+    const card = document.createElement('button'); card.type = 'button'; card.className = 'chapter-card'; card.dataset.chapterIndex = String(index); card.setAttribute('aria-pressed', String(index === state.chapterIndex)); card.addEventListener('click', () => chooseChapter(index));
+    const number = document.createElement('span'); number.className = 'chapter-card-number'; number.textContent = String(index + 1).padStart(2, '0');
+    const title = document.createElement('strong'); title.textContent = chapter.title;
+    const meter = document.createElement('progress'); meter.className = 'chapter-progress'; meter.setAttribute('aria-label', `${chapter.title} voice generation`);
+    const progressLabel = document.createElement('span'); progressLabel.className = 'chapter-card-progress';
+    card.append(number, title, meter, progressLabel); rail.append(card); updateChapterCard(index);
+  });
+  updateChapterSelection(); setChapterStatus(state.generationStatus);
+}
+
+function renderSavedBooks() {
+  const shelf = $('#savedShelf'); const rail = $('#savedBookRail'); if (!shelf || !rail) return; rail.replaceChildren(); shelf.hidden = !state.savedBooks.length;
+  $('#savedBookCount').textContent = `${state.savedBooks.length} ${state.savedBooks.length === 1 ? 'book' : 'books'}`;
+  state.savedBooks.forEach((book) => {
+    const card = document.createElement('button'); card.type = 'button'; card.className = 'saved-book-card'; card.classList.toggle('is-selected', book.key === state.bookKey); card.addEventListener('click', () => openSavedBook(book.key));
+    const mark = document.createElement('span'); mark.className = 'saved-book-mark'; mark.textContent = '▱';
+    const copy = document.createElement('span'); const title = document.createElement('strong'); title.textContent = book.name || 'Saved book'; const detail = document.createElement('small'); detail.textContent = book.key === state.bookKey ? 'Currently open' : 'Open instantly'; copy.append(title, detail);
+    const arrow = document.createElement('span'); arrow.className = 'saved-book-arrow'; arrow.textContent = '↗'; card.append(mark, copy, arrow); rail.append(card);
+  });
+}
+async function refreshSavedBooks() { state.savedBooks = await listCachedBooks(); renderSavedBooks(); }
+async function openSavedBook(key) { const book = await getCachedBook(key); if (!book?.text) { notify('That saved book is no longer available.'); refreshSavedBooks(); return; } extractionId += 1; setDocument(book.text, book.name || 'Saved book', true, key); notify('Opened instantly from your private shelf.'); }
 
 function applyChapterMap(preservePosition = false) {
   const currentPassage = preservePosition ? state.passages[state.index] : null; const book = buildChapterMap(state.sourceText); state.chapters = book.chapters; state.passages = book.passages;
@@ -80,7 +110,7 @@ function applyChapterMap(preservePosition = false) {
 }
 
 function setDocument(text, name, complete = true, bookKey = state.bookKey) {
-  stopAudio(); clearAudioCache(); generationRun += 1; state.sourceText = text; state.documentComplete = complete; state.fileName = name; state.bookKey = bookKey; state.generationStatus = complete ? 'Narration queued in the background.' : 'Finding chapters as pages load…'; applyChapterMap();
+  stopAudio(); clearAudioCache(); generationRun += 1; state.sourceText = text; state.documentComplete = complete; state.fileName = name; state.bookKey = bookKey; state.generationStatus = complete ? 'Narration queued in the background.' : 'Finding chapters as pages load…'; applyChapterMap(); renderSavedBooks();
   localStorage.setItem('zuna-file-name', name); $('#fileName').textContent = name; $('#fileMeta').textContent = `${state.chapters.length} chapters · ${state.passages.length} passages · local only`; libraryPanel.hidden = false;
   document.querySelector('.player')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); notify(`${state.chapters.length || 1} chapters ready to choose.`); if (complete) startBackgroundGeneration(); else warmCurrentPassage();
 }
@@ -95,23 +125,27 @@ function finishDocument(text, name, key) {
   generationRun += 1; lastMappedPdfPage = 0; state.sourceText = text; state.documentComplete = true; state.generationStatus = 'Narration queued in the background.'; applyChapterMap(true);
   $('#fileMeta').textContent = `${state.chapters.length} chapters · ${state.passages.length} passages · local only`; startBackgroundGeneration();
 }
-function renderPassage() { const current = state.passages[state.index]; state.chapterIndex = current ? chapterForPassage(state.index) : state.chapterIndex; const chapter = state.chapters[state.chapterIndex]; $('#chapterSelect').value = String(state.chapterIndex); $('#nowPlayingLabel').textContent = state.fileName ? `${state.fileName} · ${chapter?.title || 'Full book'}` : 'Choose a document to begin'; $('#progressLabel').textContent = state.passages.length ? `${state.index + 1} / ${state.passages.length}` : '0 / 0'; seek.value = state.index; if (!current) { passage.innerHTML = '<span class="passage-placeholder">Your current passage will appear here.</span>'; return; } passage.textContent = current; localStorage.setItem(`zuna-progress:${state.fileName}`, String(state.index)); }
+function renderPassage() { const current = state.passages[state.index]; state.chapterIndex = current ? chapterForPassage(state.index) : state.chapterIndex; const chapter = state.chapters[state.chapterIndex]; updateChapterSelection(); $('#nowPlayingLabel').textContent = state.fileName ? `${state.fileName} · ${chapter?.title || 'Full book'}` : 'Choose a document to begin'; $('#progressLabel').textContent = state.passages.length ? `${state.index + 1} / ${state.passages.length}` : '0 / 0'; seek.value = state.index; if (!current) { passage.innerHTML = '<span class="passage-placeholder">Your current passage will appear here.</span>'; return; } passage.textContent = current; localStorage.setItem(`zuna-progress:${state.fileName}`, String(state.index)); }
 
 function setPlayState(playing) { state.speaking = playing; playButton.textContent = playing ? 'Ⅱ' : '▶'; playButton.setAttribute('aria-label', playing ? 'Pause' : 'Play'); playButton.setAttribute('aria-pressed', String(playing)); }
-function clearAudioCache() { generationRun += 1; audioCache.forEach((url) => URL.revokeObjectURL(url)); audioCache.clear(); }
+function clearAudioCache() { generationRun += 1; audioCache.forEach((url) => URL.revokeObjectURL(url)); audioCache.clear(); state.readyPassages.clear(); state.generatingChapterIndex = -1; state.chapters.forEach((_, index) => updateChapterCard(index)); }
 function stopAudio() { playbackRun += 1; if (activeAudio) { activeAudio.pause(); activeAudio.removeAttribute('src'); activeAudio = null; } setPlayState(false); }
+
+function narrationContext() { return `${state.bookKey}|${state.voice}|${state.speed}`; }
+function markPassageReady(index, context) { if (context !== narrationContext() || state.readyPassages.has(index)) return; state.readyPassages.add(index); updateChapterCard(chapterForPassage(index)); }
+function setGeneratingChapter(index) { const previous = state.generatingChapterIndex; state.generatingChapterIndex = index; if (previous >= 0) updateChapterCard(previous); if (index >= 0) updateChapterCard(index); }
 
 async function generateAudio(index) {
   if (!state.kokoroOnline || !state.voice) throw new Error('Start the local Kokoro runtime and choose a voice first.');
-  const text = state.passages[index];
+  const text = state.passages[index]; const context = narrationContext();
   const key = audioStorageKey({ bookKey: state.bookKey || state.fileName, index, voice: state.voice, speed: state.speed, text });
-  if (audioCache.has(key)) return audioCache.get(key);
-  if (audioJobs.has(key)) return audioJobs.get(key);
+  if (audioCache.has(key)) { markPassageReady(index, context); return audioCache.get(key); }
+  if (audioJobs.has(key)) { const url = await audioJobs.get(key); markPassageReady(index, context); return url; }
   const job = (async () => { const stored = await getCachedAudio(key); if (stored) { const storedUrl = URL.createObjectURL(stored); audioCache.set(key, storedUrl); return storedUrl; }
     const response = await fetch(`${KOKORO_BASE_URL}/synthesize`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(synthesisPayload({ text, voice: state.voice, speed: state.speed })) });
     if (!response.ok) { let message = 'Kokoro could not generate this passage.'; try { message = (await response.json()).error || message; } catch {} throw new Error(message); }
     const blob = await response.blob(); cacheAudio(key, blob); const url = URL.createObjectURL(blob); audioCache.set(key, url); return url; })();
-  audioJobs.set(key, job); try { return await job; } finally { audioJobs.delete(key); }
+  audioJobs.set(key, job); try { const url = await job; markPassageReady(index, context); return url; } finally { audioJobs.delete(key); }
 }
 
 function warmCurrentPassage() {
@@ -119,15 +153,15 @@ function warmCurrentPassage() {
 }
 
 async function startBackgroundGeneration() {
-  const run = ++generationRun; if (!state.documentComplete) return; if (!state.passages.length) { setChapterStatus('No readable chapter text was found.'); return; }
+  const run = ++generationRun; setGeneratingChapter(-1); if (!state.documentComplete) return; if (!state.passages.length) { setChapterStatus('No readable chapter text was found.'); return; }
   if (!state.kokoroOnline || !state.voice) { setChapterStatus('Generation will begin when Kokoro is online.'); return; }
   const order = chapterGenerationOrder(state.chapters, state.chapterIndex); let ready = 0;
-  for (const index of order) { if (run !== generationRun) return; const chapter = state.chapters[chapterForPassage(index)]; setChapterStatus(`Preparing ${chapter.title} · ${ready} / ${order.length} passages`);
-    try { await generateAudio(index); } catch { if (run === generationRun) setChapterStatus('Background generation paused. Check the Kokoro runtime.'); return; } ready += 1; }
-  if (run === generationRun) setChapterStatus(`All ${state.chapters.length} chapters are ready to play.`);
+  for (const index of order) { if (run !== generationRun) return; const chapterIndex = chapterForPassage(index); const chapter = state.chapters[chapterIndex]; setGeneratingChapter(chapterIndex); setChapterStatus(`Preparing ${chapter.title} · ${ready} / ${order.length} passages`);
+    try { await generateAudio(index); } catch { if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus('Background generation paused. Check the Kokoro runtime.'); } return; } ready += 1; }
+  if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus(`All ${state.chapters.length} chapters are ready to play.`); }
 }
 
-function chooseChapter(index) { const chapter = state.chapters[index]; if (!chapter) return; const wasSpeaking = state.speaking; stopAudio(); state.chapterIndex = index; state.index = chapter.startIndex; renderPassage(); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); }
+function chooseChapter(index) { const chapter = state.chapters[index]; if (!chapter) return; const wasSpeaking = state.speaking; stopAudio(); state.chapterIndex = index; state.index = chapter.startIndex; renderPassage(); updateChapterSelection(true); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); }
 
 async function speakCurrent() {
   if (!state.passages.length) { notify('Add a book to begin.'); return; }
@@ -168,7 +202,7 @@ async function extractPdf(file, key) {
     if (currentExtraction !== extractionId) return;
     const text = normalizePdfPages(extractedPages);
     if (!hasReadableText(text)) throw new Error('No selectable text was found. This looks like a scanned PDF and needs OCR.');
-    finishDocument(text, file.name, key); await cacheBook(key, { text, name: file.name }); notify(`${state.chapters.length} chapters ready to listen.`);
+    finishDocument(text, file.name, key); await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); notify(`${state.chapters.length} chapters ready to listen.`);
   } finally { try { await pdfDocument?.cleanup(); } finally { await loadingTask.destroy(); } }
 }
 
@@ -177,22 +211,24 @@ async function handleFile(file) {
   if (cached?.text) { extractionId += 1; setDocument(cached.text, cached.name || file.name, true, key); notify('Opened instantly from your private cache.'); return; }
   const name = file.name.toLowerCase();
   try {
-    if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = decodePlainText(await file.arrayBuffer()); if (!hasReadableText(text)) throw new Error('This text file does not contain readable book text.'); setDocument(text, file.name, true, key); await cacheBook(key, { text, name: file.name }); }
+    if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = decodePlainText(await file.arrayBuffer()); if (!hasReadableText(text)) throw new Error('This text file does not contain readable book text.'); setDocument(text, file.name, true, key); await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); }
     else if (file.type === 'application/pdf' || name.endsWith('.pdf')) await extractPdf(file, key);
-    else if (file.type === 'application/epub+zip' || name.endsWith('.epub')) { extractionId += 1; notify('Opening EPUB chapters locally…'); const { extractEpub } = await import('./epub.mjs'); const book = await extractEpub(await file.arrayBuffer()); setDocument(book.text, book.title || file.name, true, key); cacheBook(key, { text: book.text, name: book.title || file.name }); }
+    else if (file.type === 'application/epub+zip' || name.endsWith('.epub')) { extractionId += 1; notify('Opening EPUB chapters locally…'); const { extractEpub } = await import('./epub.mjs'); const book = await extractEpub(await file.arrayBuffer()); setDocument(book.text, book.title || file.name, true, key); await cacheBook(key, { text: book.text, name: book.title || file.name }); await refreshSavedBooks(); }
     else notify('Please choose a readable PDF, EPUB, or TXT book.');
   } catch (error) { console.error(error); notify(error.message || 'I could not read that book. Try a readable file.'); }
 }
 
-$('#voiceSelect')?.addEventListener('change', (event) => chooseVoice(event.target.value)); $('#chapterSelect')?.addEventListener('change', (event) => chooseChapter(Number(event.target.value))); pdfInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
+$('#voiceSelect')?.addEventListener('change', (event) => chooseVoice(event.target.value)); pdfInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
 ['dragenter', 'dragover'].forEach((eventName) => dropZone.addEventListener(eventName, (event) => { event.preventDefault(); dropZone.classList.add('is-dragging'); }));
 ['dragleave', 'drop'].forEach((eventName) => dropZone.addEventListener(eventName, (event) => { event.preventDefault(); dropZone.classList.remove('is-dragging'); })); dropZone.addEventListener('drop', (event) => handleFile(event.dataTransfer.files[0]));
-$('#clearButton').addEventListener('click', () => { stopAudio(); clearAudioCache(); state.chapters = []; state.passages = []; state.sourceText = ''; state.documentComplete = false; state.generationStatus = 'Import a book to prepare its chapters.'; state.index = 0; state.chapterIndex = 0; state.fileName = ''; state.bookKey = ''; pdfInput.value = ''; localStorage.removeItem('zuna-file-name'); libraryPanel.hidden = true; renderChapterPicker(); renderPassage(); });
+$('#clearButton').addEventListener('click', () => { stopAudio(); clearAudioCache(); state.chapters = []; state.passages = []; state.sourceText = ''; state.documentComplete = false; state.generationStatus = 'Import a book to prepare its chapters.'; state.index = 0; state.chapterIndex = 0; state.fileName = ''; state.bookKey = ''; pdfInput.value = ''; localStorage.removeItem('zuna-file-name'); libraryPanel.hidden = true; renderChapterPicker(); renderPassage(); renderSavedBooks(); });
+$('#chapterPrevious')?.addEventListener('click', () => $('#chapterRail')?.scrollBy({ left: -Math.max(220, $('#chapterRail').clientWidth * .75), behavior: 'smooth' }));
+$('#chapterNext')?.addEventListener('click', () => $('#chapterRail')?.scrollBy({ left: Math.max(220, $('#chapterRail').clientWidth * .75), behavior: 'smooth' }));
 playButton.addEventListener('click', togglePlayback); $('#backButton').addEventListener('click', () => { stopAudio(); state.index = Math.max(0, state.index - 1); renderPassage(); }); $('#forwardButton').addEventListener('click', () => { stopAudio(); state.index = Math.min(Math.max(0, state.passages.length - 1), state.index + 1); renderPassage(); }); seek.addEventListener('input', () => { stopAudio(); state.index = Number(seek.value); renderPassage(); });
 $('#speedSelect').value = String(state.speed); $('#speedSelect').addEventListener('change', (event) => { const wasSpeaking = state.speaking; stopAudio(); clearAudioCache(); state.speed = Number(event.target.value); localStorage.setItem('zuna-speed', state.speed); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); });
 document.querySelectorAll('[data-nav]').forEach((link) => link.addEventListener('click', () => document.querySelectorAll('[data-nav]').forEach((item) => item.classList.toggle('is-active', item.dataset.nav === link.dataset.nav))));
 window.addEventListener('focus', () => { if (!state.kokoroOnline) loadKokoroVoices(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !state.kokoroOnline) loadKokoroVoices(); });
 const settingsDialog = $('#settingsDialog'); const openSettings = () => settingsDialog?.showModal(); $('#settingsButton')?.addEventListener('click', openSettings); $('#mobileSettingsButton')?.addEventListener('click', openSettings); $('#closeSettings')?.addEventListener('click', () => settingsDialog?.close()); $('#membershipButton')?.addEventListener('click', () => notify('We will keep a place for you. Zuna+ is coming soon.'));
-$('#clearCacheButton')?.addEventListener('click', async () => { if (!window.confirm('Remove all cached book text and generated audio from this browser?')) return; const cleared = await clearLocalCache(); notify(cleared ? 'Private book and audio cache cleared.' : 'The local cache could not be cleared.'); });
-renderChapterPicker(); if (state.fileName) $('#fileName').textContent = state.fileName; loadKokoroVoices();
+$('#clearCacheButton')?.addEventListener('click', async () => { if (!window.confirm('Remove all cached book text and generated audio from this browser?')) return; const cleared = await clearLocalCache(); if (cleared) { state.savedBooks = []; renderSavedBooks(); } notify(cleared ? 'Private book and audio cache cleared.' : 'The local cache could not be cleared.'); });
+renderChapterPicker(); if (state.fileName) $('#fileName').textContent = state.fileName; refreshSavedBooks(); loadKokoroVoices();
