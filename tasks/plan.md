@@ -77,8 +77,8 @@ Rebuild Zuna as a guest-first, local-first audiobook reader with a polished web 
 
 ### Migration tasks
 
-- [ ] Add the minimal Next.js App Router shell and Kokoro Route Handlers.
-- [ ] Move document parsing, chapter detection, chunking, and cache keys into tested modules.
-- [ ] Port the responsive Zuna reader UI and connect the optimized pipeline.
-- [ ] Verify build, tests, Kokoro integration, responsive UI, and performance budgets.
-- [ ] Retire the legacy static server after the Next.js replacement passes all gates.
+- [x] Add the minimal Next.js App Router shell and Kokoro Route Handlers.
+- [x] Move document parsing, chapter detection, chunking, and cache keys into tested modules.
+- [x] Port the responsive Zuna reader UI and connect the optimized pipeline.
+- [x] Verify build, tests, Kokoro integration, responsive UI, and performance budgets.
+- [x] Retire the legacy static server after the Next.js replacement passes all gates.

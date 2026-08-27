@@ -13,9 +13,12 @@ bash backend/setup-kokoro.sh
 backend/.venv/bin/python backend/kokoro_server.py
 ```
 
-Keep the website running at `http://127.0.0.1:4173/frontend/`. The website discovers voices from
-`http://127.0.0.1:8766/api/voices` and generates the current passage through
-`POST /api/synthesize`. No Sarvam, Dodo, or browser speech fallback is used in this path.
+Keep the Next.js website running at `http://127.0.0.1:4173/`. The browser uses same-origin routes
+under `/api/kokoro`; Next.js streams those requests to `http://127.0.0.1:8766`. No Sarvam, Dodo,
+or browser speech fallback is used in this path.
+
+Run both Next.js and Kokoro from the repository root with `npm run dev:full`, or start them
+separately with `npm run kokoro` and `npm run dev`.
 
 Run it from the repository root:
 

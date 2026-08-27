@@ -25,8 +25,8 @@
 
 ## Next.js migration
 
-- [ ] Next.js App Router serves the Zuna experience at `/`.
-- [ ] Same-origin Route Handlers stream voices and synthesis from local Kokoro.
-- [ ] PDF/TXT import, chapters, all free voices, playback, and background generation work.
-- [ ] Narration uses bounded chunks and persistent IndexedDB audio caching.
-- [ ] Tests, production build, browser checks, and performance checks pass.
+- [x] Next.js App Router serves the Zuna experience at `/`.
+- [x] Same-origin Route Handlers stream voices and synthesis from local Kokoro.
+- [x] PDF/EPUB/TXT import, chapters, all free voices, playback, and background generation work.
+- [x] Narration uses bounded chunks and persistent IndexedDB audio caching.
+- [x] Tests, production build, browser checks, and performance checks pass.
