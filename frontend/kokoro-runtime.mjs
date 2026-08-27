@@ -1,4 +1,4 @@
-export const DEFAULT_KOKORO_URL = 'http://127.0.0.1:8766';
+export const KOKORO_BASE_URL = '/kokoro';
 
 const LANGUAGE_NAMES = { af: 'American English', am: 'American English', bf: 'British English', bm: 'British English', ef: 'Spanish', em: 'Spanish', ff: 'French', hf: 'Hindi', hm: 'Hindi', if: 'Italian', im: 'Italian', jf: 'Japanese', jm: 'Japanese', pf: 'Brazilian Portuguese', pm: 'Brazilian Portuguese', zf: 'Mandarin', zm: 'Mandarin' };
 

@@ -1,6 +1,6 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
 import { cleanText, splitIntoPassages, clampProgress } from './reader-core.mjs';
-import { DEFAULT_KOKORO_URL, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey } from './kokoro-runtime.mjs';
+import { KOKORO_BASE_URL, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey } from './kokoro-runtime.mjs?v=7';
 
 const state = {
   passages: [], index: 0, voice: localStorage.getItem('zuna-kokoro-voice') || '',
@@ -9,7 +9,6 @@ const state = {
   kokoroVoices: [], kokoroOnline: false,
 };
 
-const KOKORO_URL = localStorage.getItem('zuna-kokoro-url') || DEFAULT_KOKORO_URL;
 const $ = (selector) => document.querySelector(selector);
 const pdfInput = $('#pdfInput'); const dropZone = $('#dropZone'); const libraryPanel = $('#libraryPanel');
 const passage = $('#passage'); const seek = $('#seek'); const playButton = $('#playButton'); const toast = $('#toast'); const engineNote = $('#engineNote');
@@ -54,11 +53,11 @@ function chooseVoice(voice) {
 
 async function loadKokoroVoices() {
   try {
-    const response = await fetch(`${KOKORO_URL}/api/voices`); if (!response.ok) throw new Error('Voice endpoint unavailable');
+    const response = await fetch(`${KOKORO_BASE_URL}/api/voices`, { cache: 'no-store', signal: AbortSignal.timeout(5000) }); if (!response.ok) throw new Error('Voice endpoint unavailable');
     state.kokoroVoices = normalizeVoices(await response.json()); state.kokoroOnline = state.kokoroVoices.length > 0;
     if (!state.kokoroVoices.includes(state.voice)) { state.voice = state.kokoroVoices[0] || ''; if (state.voice) localStorage.setItem('zuna-kokoro-voice', state.voice); }
     setEngineNote(state.kokoroOnline ? `Kokoro local runtime · ${state.kokoroVoices.length} voices · all free` : 'Kokoro runtime is online but has no voice pack.');
-  } catch { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote(`Kokoro is offline · start the local runtime at ${KOKORO_URL}`); }
+  } catch { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote('Kokoro is offline · see backend/README.md to start the local runtime'); }
   renderVoicePicker();
 }
 
@@ -78,7 +77,7 @@ function stopAudio() { playbackRun += 1; if (activeAudio) { activeAudio.pause();
 async function generateAudio(index) {
   if (!state.kokoroOnline || !state.voice) throw new Error('Start the local Kokoro runtime and choose a voice first.');
   const key = audioCacheKey(index, state.voice, state.speed); if (audioCache.has(key)) return audioCache.get(key);
-  const response = await fetch(`${KOKORO_URL}/api/synthesize`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(synthesisPayload({ text: state.passages[index], voice: state.voice, speed: state.speed })) });
+  const response = await fetch(`${KOKORO_BASE_URL}/api/synthesize`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(synthesisPayload({ text: state.passages[index], voice: state.voice, speed: state.speed })) });
   if (!response.ok) { let message = 'Kokoro could not generate this passage.'; try { message = (await response.json()).error || message; } catch {} throw new Error(message); }
   const url = URL.createObjectURL(await response.blob()); audioCache.set(key, url); return url;
 }

@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeVoices, groupVoices, synthesisPayload, audioCacheKey } from '../kokoro-runtime.mjs';
+import { KOKORO_BASE_URL, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey } from '../kokoro-runtime.mjs';
+
+test('routes Kokoro through the same-origin web server', () => {
+  assert.equal(KOKORO_BASE_URL, '/kokoro');
+});
 
 test('normalizes the Kokoro voice list and keeps every valid voice', () => {
   assert.deepEqual(normalizeVoices(['af_heart', ' hi_sky ', '', 42, 'af_heart']), ['af_heart', 'hi_sky', 'af_heart']);
