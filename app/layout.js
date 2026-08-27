@@ -1,4 +1,9 @@
 import './globals.css';
+import { DM_Mono, DM_Sans, Playfair_Display } from 'next/font/google';
+
+const sans = DM_Sans({ subsets: ['latin'], display: 'swap', variable: '--font-sans' });
+const mono = DM_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-mono', weight: ['400', '500'] });
+const serif = Playfair_Display({ subsets: ['latin'], display: 'swap', variable: '--font-serif' });
 
 export const metadata = {
   title: 'Zuna — your books, with a voice',
@@ -9,12 +14,7 @@ export const viewport = { themeColor: '#f5efe6' };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet" />
-      </head>
+    <html lang="en" className={`${sans.variable} ${mono.variable} ${serif.variable}`} suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );

@@ -10,9 +10,9 @@
   --accent: #c76650;
   --accent-deep: #914031;
   --sage: #82927f;
-  --serif: 'Playfair Display', Georgia, serif;
-  --sans: 'DM Sans', Arial, sans-serif;
-  --mono: 'DM Mono', monospace;
+  --serif: var(--font-serif), Georgia, serif;
+  --sans: var(--font-sans), Arial, sans-serif;
+  --mono: var(--font-mono), monospace;
   --shadow: 0 22px 60px rgba(76, 59, 42, .1);
 }
 

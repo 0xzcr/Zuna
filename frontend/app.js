@@ -1,7 +1,7 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
 import { buildChapterMap, chapterGenerationOrder, clampProgress, textItemsToText } from './reader-core.mjs?v=8';
 import { KOKORO_BASE_URL, normalizeVoices, groupVoices, synthesisPayload } from './kokoro-runtime.mjs?v=7';
-import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, getCachedAudio, getCachedBook } from './local-cache.mjs';
+import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook } from './local-cache.mjs';
 
 const state = {
   chapters: [], passages: [], index: 0, chapterIndex: 0, sourceText: '', documentComplete: false, generationStatus: 'Import a book to prepare its chapters.',
@@ -144,7 +144,7 @@ async function extractPdf(file, key) {
 }
 
 async function handleFile(file) {
-  if (!file) return; const key = bookStorageKey(file); const cached = await getCachedBook(key);
+  if (!file) return; if (file.size > 512_000_000) { notify('Choose a book smaller than 512 MB.'); return; } const key = bookStorageKey(file); const cached = await getCachedBook(key);
   if (cached?.text) { extractionId += 1; setDocument(cached.text, cached.name || file.name, true, key); notify('Opened instantly from your private cache.'); return; }
   const name = file.name.toLowerCase();
   try {
@@ -165,4 +165,5 @@ document.querySelectorAll('[data-nav]').forEach((link) => link.addEventListener(
 window.addEventListener('focus', () => { if (!state.kokoroOnline) loadKokoroVoices(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !state.kokoroOnline) loadKokoroVoices(); });
 const settingsDialog = $('#settingsDialog'); const openSettings = () => settingsDialog?.showModal(); $('#settingsButton')?.addEventListener('click', openSettings); $('#mobileSettingsButton')?.addEventListener('click', openSettings); $('#closeSettings')?.addEventListener('click', () => settingsDialog?.close()); $('#membershipButton')?.addEventListener('click', () => notify('We will keep a place for you. Zuna+ is coming soon.'));
+$('#clearCacheButton')?.addEventListener('click', async () => { if (!window.confirm('Remove all cached book text and generated audio from this browser?')) return; const cleared = await clearLocalCache(); notify(cleared ? 'Private book and audio cache cleared.' : 'The local cache could not be cleared.'); });
 renderChapterPicker(); if (state.fileName) $('#fileName').textContent = state.fileName; loadKokoroVoices();

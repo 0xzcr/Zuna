@@ -63,3 +63,18 @@ export const getCachedBook = (key) => read('books', key);
 export const cacheBook = (key, book) => write('books', key, book);
 export const getCachedAudio = async (key) => (await read('audio', key))?.blob || null;
 export const cacheAudio = (key, blob) => write('audio', key, { blob, createdAt: Date.now() });
+
+export async function clearLocalCache() {
+  try {
+    if (databasePromise) (await databasePromise).close();
+    databasePromise = undefined;
+    await new Promise((resolve, reject) => {
+      const request = indexedDB.deleteDatabase(DATABASE);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}

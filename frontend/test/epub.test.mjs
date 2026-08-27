@@ -17,3 +17,13 @@ test('extracts EPUB chapters in spine order with readable headings', async () =>
   assert.match(book.text, /Chapter One\nThe first room opens\./);
   assert.ok(book.text.indexOf('Chapter One') < book.text.indexOf('Chapter Two'));
 });
+
+test('rejects an EPUB chapter that expands beyond the local safety limit', async () => {
+  const archive = zipSync({
+    'META-INF/container.xml': strToU8('<container><rootfile full-path="book.opf"/></container>'),
+    'book.opf': strToU8('<package><manifest><item id="one" href="one.xhtml"/></manifest><spine><itemref idref="one"/></spine></package>'),
+    'one.xhtml': strToU8(`<p>${'x'.repeat(5_000_001)}</p>`),
+  });
+
+  await assert.rejects(extractEpub(archive.buffer), /safety limit/);
+});
