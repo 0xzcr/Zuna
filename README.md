@@ -1,26 +1,27 @@
 # Zuna
 
-Zuna is a local-first browser reading companion that turns readable PDF and TXT files into
-listening sessions. The browser extracts documents locally and uses the device's native speech
-synthesis voices. Vercel serves only the static application.
+Zuna is a guest-first, local-first reading companion that turns the books you already own into
+listening sessions. The website extracts documents locally and uses the device's native speech
+synthesis voices while the backend and React Native clients are built in phases.
 
 Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 
 ## Current status
 
+- Rebuilt the responsive website shell with a calm, private listening-room experience.
 - Supports PDFs with an extractable text layer and plain-text files.
 - Extracts PDF text in bounded eight-page batches and can begin playback before the whole file
   is processed.
-- Provides narrator choices, playback controls, local resume state, seeking, and playback
-  speed controls.
+- Provides narrator choices, playback controls, local resume state, seeking, playback speed,
+  settings, and theme controls.
 - Keeps document text and playback state on the device. There is no login, database, upload
   API, or server-side book processing.
 - Uses browser speech synthesis only. Voice availability and quality depend on the operating
   system and browser.
 
-Scanned-PDF OCR, EPUB support, hosted narration, and whole-book pre-generation are not currently
-implemented. The project is a private reading prototype rather than a finished audiobook
-renderer.
+Scanned-PDF OCR, EPUB support, Kokoro ONNX, Sarvam hosted narration, wallet billing, backend
+auth, and whole-book pre-generation are not currently implemented. The project is being rebuilt
+in phases toward the full product specification.
 
 ## Run locally
 

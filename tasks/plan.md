@@ -1,43 +1,63 @@
-# Implementation Plan: Zuna cozy reader UI
+# Implementation Plan: Zuna rebuild
 
 ## Overview
 
-Refresh the existing static Zuna reader into a clean, dreamy, cozy local-first reading experience with a responsive library shell, light/dark themes, and a persistent player while preserving the current local PDF/TXT extraction and browser speech functionality.
+Rebuild Zuna as a guest-first, local-first audiobook reader with a polished web surface, a shared backend for paid narration and billing, and a React Native mobile client. The implementation follows the specification's phase order: web foundation first, then backend contracts, then the mobile client and shared pipeline.
 
 ## Architecture decisions
 
-- Keep the zero-build static app and existing browser APIs; no new UI dependency is needed.
-- Use CSS custom properties for theme tokens so light/dark mode is one shared design system.
-- Keep document import, passage extraction, playback, and localStorage behavior in `frontend/app.js`; the UI refresh should not split business logic across duplicate clients.
-- Use the existing supplied artwork as a restrained book-cover/ambient accent, not as a full-page background, so readable content stays calm in both themes.
+- Keep the website dependency-light while the product surface is being validated; local PDF/TXT extraction and browser speech remain usable without an account.
+- Treat the passage/chunk as the shared unit of playback so the free local path and future paid cloud path can use the same state model.
+- Keep document text and free-tier progress local. Backend records are introduced only for authenticated wallet/generation flows.
+- Keep payment and narration credentials server-side and represent pricing as configuration, not literals in UI or business logic.
+- Add the backend and mobile app as separate workspaces so each surface can be tested and deployed independently.
 
 ## Task list
 
-### Phase 1: Foundation
+### Website foundation
 
-- [x] Task 1: Rebuild the page shell and library/player hierarchy around the existing local reader flow.
-- [x] Task 2: Add a semantic light/dark theme system with persisted preference and accessible controls.
+- [x] Rebuild the responsive Zuna website shell and visual system.
+- [x] Preserve local PDF/TXT import, incremental PDF extraction, narrator choice, resume state, and browser playback.
+- [x] Add mobile navigation, settings dialog, product promise strip, and Zuna+ teaser.
+- [x] Extract reader text cleanup/chunking into a tested pure module.
 
-### Checkpoint: UI foundation
+### Checkpoint: Website
 
-- [x] Existing file import and playback interactions remain functional.
-- [x] Desktop and mobile layouts are usable at responsive breakpoints.
-- [x] `npm test` and `npm run check` pass.
+- [x] `npm test`, `npm run check`, and `git diff --check` pass.
+- [x] Desktop and mobile browser screenshots verified.
+- [x] Import, narrator selection, settings, and playback interactions verified.
 
-### Phase 2: Interaction polish
+### Phase 0: Backend skeleton
 
-- [ ] Task 3: Add richer empty/library states, compact player affordances, and responsive navigation treatment.
-- [ ] Task 4: Verify visual output and accessibility, then fix regressions.
+- [ ] Define shared user, wallet, book, chunk, and generation-event contracts.
+- [ ] Implement guest-safe user creation, `$0` wallet state, and book creation endpoints.
+- [ ] Add request validation, error states, health check, and focused API tests.
+- [ ] Add environment-driven pricing/payment/provider configuration with no secrets in client code.
+
+### Phase 1: Mobile core loop
+
+- [ ] Scaffold the React Native iOS/Android app.
+- [ ] Add guest import/library/player flows around the shared chunk state model.
+- [ ] Add the Kokoro ONNX integration seam and bounded prefetch/extraction interfaces.
+
+### Phase 2+: Paid narration and polish
+
+- [ ] Add server-side Sarvam WebSocket generation and wallet metering.
+- [ ] Add Dodo hosted checkout and webhook handling.
+- [ ] Add Zuna+, Tier 2 chapter detection, voice preview, sleep timer, and cache policy.
 
 ## Risks and mitigations
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Browser speech voices vary by device | Medium | Keep the existing fallback behavior and expose the local engine state in the UI. |
-| Existing artwork is visually intense | Medium | Limit it to a framed cover/ambient glow with theme-aware overlays. |
-| Static app has no component framework | Low | Prefer semantic HTML, CSS tokens, and small event handlers over adding a dependency. |
+| Kokoro performance varies by device | High | Keep the first chunk small, warm the model once, and benchmark target devices before promising timing. |
+| Sarvam/Dodo contracts can change | High | Use provider adapters and environment config; verify current docs before integration. |
+| Guest and paid data boundaries drift | High | Keep local book/chunk storage separate from backend billing records. |
+| Browser and native UI diverge | Medium | Share domain contracts and state names, not platform-specific UI code. |
 
-## Open questions
+## Open decisions
 
-- Final brand mark and artwork direction can be refined after the first visual pass.
-- EPUB/Kokoro/Sarvam remain later product phases and are not part of this UI slice.
+- Final auth method: email/OTP, Apple/Google OAuth, or a mix.
+- Backend persistence choice for production deployment.
+- Current Sarvam pricing/rate limits and Dodo credit primitives.
+- Region-specific external checkout vs. IAP routing.

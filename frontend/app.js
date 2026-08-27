@@ -1,4 +1,5 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
+import { cleanText, splitIntoPassages, clampProgress } from './reader-core.mjs';
 
 const state = {
   passages: [],
@@ -26,12 +27,14 @@ function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem('zuna-theme', theme);
   const toggle = $('#themeToggle');
-  const icon = $('#themeIcon');
   if (toggle) {
     toggle.setAttribute('aria-pressed', String(theme === 'dark'));
     toggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
   }
+  const icon = $('#themeIcon');
   if (icon) icon.textContent = theme === 'dark' ? '☾' : '☼';
+  const settingsTheme = $('#settingsTheme');
+  if (settingsTheme) settingsTheme.textContent = theme.toUpperCase();
 }
 
 applyTheme(state.theme);
@@ -44,26 +47,9 @@ function notify(message) {
   notify.timer = setTimeout(() => toast.classList.remove('is-visible'), 3400);
 }
 
-function splitIntoPassages(text) {
-  // ponytail: deliberately simple sentence grouping; replace with a language-aware segmenter if PDF tests expose edge cases.
-  return text.replace(/\s+/g, ' ').trim().match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((item) => item.trim()).filter((item) => item.length > 2) || [];
-}
-
-function cleanText(text) {
-  const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  const counts = new Map();
-  lines.forEach((line) => counts.set(line, (counts.get(line) || 0) + 1));
-  return lines.filter((line) => {
-    if (/^\d{1,4}$/.test(line)) return false;
-    if (line.length < 90 && (counts.get(line) || 0) > 1) return false;
-    return true;
-  }).join(' ');
-}
-
 function setDocument(text, name) {
   state.passages = splitIntoPassages(cleanText(text));
-  state.index = Number(localStorage.getItem(`zuna-progress:${name}`) || 0);
-  state.index = Math.min(state.index, Math.max(0, state.passages.length - 1));
+  state.index = clampProgress(localStorage.getItem(`zuna-progress:${name}`), state.passages.length);
   state.fileName = name;
   localStorage.setItem('zuna-file-name', name);
   $('#fileName').textContent = name;
@@ -73,7 +59,7 @@ function setDocument(text, name) {
   seek.max = Math.max(0, state.passages.length - 1);
   seek.value = state.index;
   renderPassage();
-  document.querySelector('.voice-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelector('.player')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   notify(`${state.passages.length} passages ready to listen.`);
 }
 
@@ -101,19 +87,17 @@ const narratorProfiles = {
   mira: { pitch: 1.18, rate: 1.04, names: ['Samantha', 'Karen', 'Victoria', 'Moira', 'Ava', 'Zoe', 'Siri', 'Female', 'Google US English'] },
 };
 
-function setEngineNote(message) {
-  engineNote.textContent = message;
-}
+function setEngineNote(message) { engineNote.textContent = message; }
 
 function stopAudio() {
   window.speechSynthesis?.cancel();
   state.speaking = false;
   playButton.textContent = '▶';
+  playButton.setAttribute('aria-label', 'Play');
+  playButton.setAttribute('aria-pressed', 'false');
 }
 
-function fallbackSpeechAvailable() {
-  return 'speechSynthesis' in window;
-}
+function fallbackSpeechAvailable() { return 'speechSynthesis' in window; }
 
 function fallbackVoice(narrator = state.narrator) {
   const voices = window.speechSynthesis?.getVoices?.() || [];
@@ -134,35 +118,26 @@ function speakWithBrowser() {
   utterance.rate = state.speed * profile.rate;
   utterance.pitch = profile.pitch;
   utterance.voice = fallbackVoice(state.narrator);
-  utterance.onstart = () => { state.speaking = true; playButton.textContent = 'Ⅱ'; setEngineNote('Browser speech narration · processed locally'); };
+  utterance.onstart = () => { state.speaking = true; playButton.textContent = 'Ⅱ'; playButton.setAttribute('aria-label', 'Pause'); playButton.setAttribute('aria-pressed', 'true'); setEngineNote('Browser speech narration · processed locally'); };
   utterance.onend = () => {
     state.speaking = false;
     playButton.textContent = '▶';
-    if (state.index < state.passages.length - 1) {
-      state.index += 1;
-      renderPassage();
-      speakCurrent();
-    } else notify('You reached the end of this document.');
+    playButton.setAttribute('aria-label', 'Play');
+    playButton.setAttribute('aria-pressed', 'false');
+    if (state.index < state.passages.length - 1) { state.index += 1; renderPassage(); speakCurrent(); }
+    else notify('You reached the end of this document.');
   };
-  utterance.onerror = () => { state.speaking = false; playButton.textContent = '▶'; notify('The browser could not start narration.'); };
+  utterance.onerror = () => { state.speaking = false; playButton.textContent = '▶'; playButton.setAttribute('aria-label', 'Play'); notify('The browser could not start narration.'); };
   window.speechSynthesis.speak(utterance);
 }
 
-function speakCurrent() {
-  if (state.passages.length) speakWithBrowser();
-}
+function speakCurrent() { if (state.passages.length) speakWithBrowser(); }
 
 function togglePlayback() {
   if (!state.passages.length) { notify('Add a book to begin.'); return; }
-  if (state.speaking) {
-    window.speechSynthesis.pause();
-    state.speaking = false;
-    playButton.textContent = '▶';
-  } else if (window.speechSynthesis?.paused) {
-    window.speechSynthesis.resume();
-    state.speaking = true;
-    playButton.textContent = 'Ⅱ';
-  } else speakCurrent();
+  if (state.speaking) { window.speechSynthesis.pause(); state.speaking = false; playButton.textContent = '▶'; playButton.setAttribute('aria-label', 'Play'); playButton.setAttribute('aria-pressed', 'false'); }
+  else if (window.speechSynthesis?.paused) { window.speechSynthesis.resume(); state.speaking = true; playButton.textContent = 'Ⅱ'; playButton.setAttribute('aria-label', 'Pause'); playButton.setAttribute('aria-pressed', 'true'); }
+  else speakCurrent();
 }
 
 async function extractPdf(file) {
@@ -170,18 +145,16 @@ async function extractPdf(file) {
   notify('Reading your book locally…');
   const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');
   pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
-  const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pdfDocument = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
   let firstBatch = true;
-  await processPagesInBatches(document.numPages, async (pageNumber) => {
-    const page = await document.getPage(pageNumber);
+  await processPagesInBatches(pdfDocument.numPages, async (pageNumber) => {
+    const page = await pdfDocument.getPage(pageNumber);
     const content = await page.getTextContent();
     return content.items.map((item) => item.str).join(' ');
   }, (pages, pageNumber, pageCount) => {
     if (currentExtraction !== extractionId) return false;
-    if (firstBatch) {
-      firstBatch = false;
-      setDocument(pages.join('\n'), file.name);
-    } else appendDocument(pages.join('\n'), pageNumber, pageCount);
+    if (firstBatch) { firstBatch = false; setDocument(pages.join('\n'), file.name); }
+    else appendDocument(pages.join('\n'), pageNumber, pageCount);
     $('#fileMeta').textContent = `${state.passages.length} passages · reading page ${pageNumber} / ${pageCount} · local only`;
     if (pageNumber === pageCount) notify(`${state.passages.length} passages ready to listen.`);
     return true;
@@ -191,37 +164,36 @@ async function extractPdf(file) {
 async function handleFile(file) {
   if (!file) return;
   if (file.type === 'text/plain' || file.name.endsWith('.txt')) { extractionId += 1; setDocument(await file.text(), file.name); }
-  else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-    try { await extractPdf(file); } catch (error) { console.error(error); notify('I could not read that book. Try a readable file.'); }
-  } else notify('Please choose a readable book file (PDF or TXT).');
+  else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) { try { await extractPdf(file); } catch (error) { console.error(error); notify('I could not read that book. Try a readable file.'); } }
+  else notify('Please choose a readable book file (PDF or TXT).');
 }
 
 document.querySelectorAll('.narrator-card').forEach((card) => card.addEventListener('click', () => {
   document.querySelectorAll('.narrator-card').forEach((item) => { item.classList.remove('is-selected'); item.setAttribute('aria-checked', 'false'); });
-  card.classList.add('is-selected'); card.setAttribute('aria-checked', 'true');
-  state.narrator = card.dataset.narrator;
-  localStorage.setItem('zuna-narrator', state.narrator);
-  if (state.speaking) speakCurrent();
+  card.classList.add('is-selected'); card.setAttribute('aria-checked', 'true'); state.narrator = card.dataset.narrator; localStorage.setItem('zuna-narrator', state.narrator); if (state.speaking) speakCurrent();
 }));
 
 const savedNarrator = document.querySelector(`[data-narrator="${state.narrator}"]`);
 if (savedNarrator) savedNarrator.click();
+document.querySelectorAll('[data-nav]').forEach((link) => link.addEventListener('click', () => document.querySelectorAll('[data-nav]').forEach((item) => item.classList.toggle('is-active', item.dataset.nav === link.dataset.nav))));
 
+const settingsDialog = $('#settingsDialog');
+const openSettings = () => settingsDialog?.showModal();
+$('#settingsButton')?.addEventListener('click', openSettings);
+$('#mobileSettingsButton')?.addEventListener('click', openSettings);
+$('#closeSettings')?.addEventListener('click', () => settingsDialog?.close());
+$('#membershipButton')?.addEventListener('click', () => notify('We will keep a place for you. Zuna+ is coming soon.'));
 pdfInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
 ['dragenter', 'dragover'].forEach((eventName) => dropZone.addEventListener(eventName, (event) => { event.preventDefault(); dropZone.classList.add('is-dragging'); }));
 ['dragleave', 'drop'].forEach((eventName) => dropZone.addEventListener(eventName, (event) => { event.preventDefault(); dropZone.classList.remove('is-dragging'); }));
 dropZone.addEventListener('drop', (event) => handleFile(event.dataTransfer.files[0]));
-$('#clearButton').addEventListener('click', () => { stopAudio(); state.passages = []; state.index = 0; pdfInput.value = ''; libraryPanel.hidden = true; renderPassage(); });
+$('#clearButton').addEventListener('click', () => { stopAudio(); state.passages = []; state.index = 0; state.fileName = ''; pdfInput.value = ''; libraryPanel.hidden = true; $('#nowPlayingLabel').textContent = 'Choose a document to begin'; renderPassage(); });
 playButton.addEventListener('click', togglePlayback);
 $('#backButton').addEventListener('click', () => { stopAudio(); state.index = Math.max(0, state.index - 1); renderPassage(); });
 $('#forwardButton').addEventListener('click', () => { stopAudio(); state.index = Math.min(Math.max(0, state.passages.length - 1), state.index + 1); renderPassage(); });
 seek.addEventListener('input', () => { stopAudio(); state.index = Number(seek.value); renderPassage(); });
 $('#speedSelect').value = String(state.speed);
-$('#speedSelect').addEventListener('change', (event) => {
-  state.speed = Number(event.target.value);
-  localStorage.setItem('zuna-speed', state.speed);
-  if (state.speaking) speakCurrent();
-});
+$('#speedSelect').addEventListener('change', (event) => { state.speed = Number(event.target.value); localStorage.setItem('zuna-speed', state.speed); if (state.speaking) speakCurrent(); });
 if (!fallbackSpeechAvailable()) setEngineNote('Narration is not available in this browser.');
 if (state.fileName) $('#fileName').textContent = state.fileName;
 window.speechSynthesis?.addEventListener('voiceschanged', () => fallbackVoice(state.narrator));

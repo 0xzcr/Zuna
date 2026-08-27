@@ -1,12 +1,23 @@
-# Zuna UI task list
+# Zuna rebuild task list
 
-- [x] Task 1: Rebuild the page shell and library/player hierarchy.
-- [x] Task 2: Add persisted light/dark theme switching.
-- [x] Task 3: Polish empty states, player controls, and responsive behavior.
-- [x] Task 4: Run tests, checks, and visual verification.
+## Website
 
-## Checkpoint: UI foundation
+- [x] Rebuild website shell, visual system, responsive layout, and mobile navigation.
+- [x] Preserve local PDF/TXT import and incremental extraction.
+- [x] Preserve narrator selection, local progress, and browser speech playback.
+- [x] Add tested reader-core text cleanup, passage splitting, and progress clamping.
 
-- [x] Existing file import and playback remain functional.
-- [x] Responsive layouts are checked at mobile and desktop widths.
-- [x] Tests and syntax checks pass.
+## Checkpoint: Website
+
+- [x] Automated tests and syntax checks pass.
+- [x] Browser runtime verified at desktop and mobile sizes.
+- [x] No browser console errors during the verified flow.
+
+## Backend / mobile
+
+- [ ] Phase 0 backend/data model skeleton.
+- [ ] Phase 1 React Native app shell and guest reader flow.
+- [ ] Phase 1 Kokoro pipeline integration.
+- [ ] Phase 2 Sarvam wallet generation and Dodo checkout.
+- [ ] Phase 3 Zuna+, cloning, and Tier 2 chapter detection.
+- [ ] Phase 4 polish and production verification.
