@@ -19,9 +19,9 @@ Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 - Uses browser speech synthesis only. Voice availability and quality depend on the operating
   system and browser.
 
-Scanned-PDF OCR, EPUB support, Kokoro ONNX, Sarvam hosted narration, wallet billing, backend
-auth, and whole-book pre-generation are not currently implemented. The project is being rebuilt
-in phases toward the full product specification.
+Scanned-PDF OCR, EPUB support in the mobile app, Sarvam hosted narration, wallet billing,
+backend auth, and whole-book pre-generation are not currently implemented. The website now has
+a local Kokoro runtime path; native mobile Kokoro integration remains a later Phase 1 task.
 
 ## Run locally
 

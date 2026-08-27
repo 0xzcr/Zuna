@@ -13,3 +13,4 @@ dist/
 *.pth
 .vercel
 .env*
+backend/kokoro_models/

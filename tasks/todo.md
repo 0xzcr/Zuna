@@ -4,8 +4,9 @@
 
 - [x] Rebuild website shell, visual system, responsive layout, and mobile navigation.
 - [x] Preserve local PDF/TXT import and incremental extraction.
-- [x] Preserve narrator selection, local progress, and browser speech playback.
+- [x] Preserve narrator selection, local progress, and local audio playback.
 - [x] Add tested reader-core text cleanup, passage splitting, and progress clamping.
+- [x] Connect the website to local Kokoro and expose every discovered voice for free.
 
 ## Checkpoint: Website
 

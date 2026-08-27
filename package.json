@@ -4,7 +4,7 @@
   "private": true,
   "description": "A private, browser-local PDF narration companion.",
   "scripts": {
-    "check": "node --check frontend/app.js && node --check frontend/progressive-pages.mjs && node --check frontend/reader-core.mjs && node --check backend/server.mjs && node --check mobile/src/reader-state.mjs",
+    "check": "node --check frontend/app.js && node --check frontend/progressive-pages.mjs && node --check frontend/reader-core.mjs && node --check frontend/kokoro-runtime.mjs && node --check backend/server.mjs && node --check mobile/src/reader-state.mjs",
     "test": "node --test frontend/test/*.mjs backend/test/*.mjs mobile/test/*.mjs",
     "backend": "node backend/server.mjs",
     "dev": "python3 -m http.server 4173 --directory .",

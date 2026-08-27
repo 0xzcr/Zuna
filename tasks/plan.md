@@ -18,6 +18,7 @@ Rebuild Zuna as a guest-first, local-first audiobook reader with a polished web 
 
 - [x] Rebuild the responsive Zuna website shell and visual system.
 - [x] Preserve local PDF/TXT import, incremental PDF extraction, narrator choice, resume state, and browser playback.
+- [x] Replace browser speech with the local Kokoro runtime, dynamic 54-voice discovery, and free WAV generation.
 - [x] Add mobile navigation, settings dialog, product promise strip, and Zuna+ teaser.
 - [x] Extract reader text cleanup/chunking into a tested pure module.
 
