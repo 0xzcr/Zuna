@@ -2,6 +2,34 @@ export function splitIntoPassages(text) {
   return text.replace(/\s+/g, ' ').trim().match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((item) => item.trim()).filter((item) => item.length > 2) || [];
 }
 
+export function splitIntoNarrationChunks(text, { firstTarget = 280, target = 900, max = 1200 } = {}) {
+  const sentences = splitIntoPassages(text);
+  if (text.trim().length <= firstTarget) return sentences;
+
+  const chunks = [];
+  let current = '';
+  for (const sentence of sentences) {
+    const limit = chunks.length ? target : firstTarget;
+    if (current && current.length + sentence.length + 1 > limit) {
+      chunks.push(current);
+      current = '';
+    }
+    if (sentence.length <= max) {
+      current = `${current} ${sentence}`.trim();
+      continue;
+    }
+    for (const word of sentence.split(/\s+/)) {
+      if (current && current.length + word.length + 1 > max) {
+        chunks.push(current);
+        current = '';
+      }
+      current = `${current} ${word}`.trim();
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
 const CHAPTER_HEADING = /^(?:(?:chapter|part|book)\s+(?:\d+|[ivxlcdm]+|[a-z]+)(?:\s*[:—–.-]\s*.+)?|prologue|epilogue|preface|introduction|afterword|acknowledg(?:e)?ments)$/i;
 
 function isChapterHeading(line) {
@@ -30,7 +58,7 @@ export function buildChapterMap(text) {
   const source = namedChapters.length ? sections : [{ title: 'Full book', lines: sections[0].lines }];
   const passages = [];
   const chapters = source.map(({ title, lines }) => {
-    const chapterPassages = splitIntoPassages(lines.join(' '));
+    const chapterPassages = splitIntoNarrationChunks(lines.join(' '));
     const startIndex = passages.length;
     passages.push(...chapterPassages);
     return { title, startIndex, endIndex: passages.length - 1 };
