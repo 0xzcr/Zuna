@@ -45,7 +45,7 @@ export function buildChapterMap(text) {
 
 export function chapterGenerationOrder(chapters, selectedChapterIndex = 0) {
   const selected = chapters[selectedChapterIndex] ? selectedChapterIndex : 0;
-  const chapterOrder = [selected, ...chapters.map((_, index) => index).filter((index) => index !== selected)];
+  const chapterOrder = chapters.map((_, offset) => (selected + offset) % chapters.length);
   return chapterOrder.flatMap((index) => {
     const chapter = chapters[index];
     return Array.from({ length: Math.max(0, chapter.endIndex - chapter.startIndex + 1) }, (_, offset) => chapter.startIndex + offset);

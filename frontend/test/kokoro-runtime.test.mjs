@@ -26,4 +26,5 @@ test('groups every voice into a stable language dropdown order', () => {
 test('separates cached audio by passage, voice, and speed', () => {
   assert.equal(audioCacheKey(3, 'af_heart', 1), '3:af_heart:1');
   assert.notEqual(audioCacheKey(3, 'af_heart', 1), audioCacheKey(3, 'am_adam', 1));
+  assert.notEqual(audioCacheKey(3, 'af_heart', 1, 'First book.'), audioCacheKey(3, 'af_heart', 1, 'Second book.'));
 });

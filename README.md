@@ -12,16 +12,17 @@ Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 - Supports PDFs with an extractable text layer and plain-text files.
 - Extracts PDF text in bounded eight-page batches and can begin playback before the whole file
   is processed.
-- Provides narrator choices, playback controls, local resume state, seeking, playback speed,
-  settings, and theme controls.
+- Detects common chapter headings, skips front matter on first play, and lets readers jump to
+  any chapter while the remaining Kokoro narration generates sequentially in the background.
+- Provides 54 local Kokoro voices, playback controls, local resume state, seeking, playback
+  speed, settings, and theme controls.
 - Keeps document text and playback state on the device. There is no login, database, upload
   API, or server-side book processing.
-- Uses browser speech synthesis only. Voice availability and quality depend on the operating
-  system and browser.
+- Uses the local Kokoro runtime; document text is not sent to a hosted narration provider.
 
-Scanned-PDF OCR, EPUB support in the mobile app, Sarvam hosted narration, wallet billing,
-backend auth, and whole-book pre-generation are not currently implemented. The website now has
-a local Kokoro runtime path; native mobile Kokoro integration remains a later Phase 1 task.
+Scanned-PDF OCR, EPUB support in the mobile app, Sarvam hosted narration, wallet billing, and
+backend auth are not currently implemented. Native mobile Kokoro integration remains a later
+Phase 1 task.
 
 ## Run locally
 

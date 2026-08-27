@@ -27,6 +27,12 @@ test('generates the selected chapter before the rest of the book', () => {
   assert.deepEqual(chapterGenerationOrder(book.chapters, 1), [2, 3, 0, 1]);
 });
 
+test('prepares following chapters before earlier front matter', () => {
+  const book = buildChapterMap(`Copyright page.\nChapter 1\nOne. Two.\nChapter 2\nThree. Four.`);
+
+  assert.deepEqual(chapterGenerationOrder(book.chapters, 1), [1, 2, 3, 4, 0]);
+});
+
 test('preserves PDF line endings so chapter headings remain detectable', () => {
   assert.equal(textItemsToText([
     { str: 'CHAPTER ONE', hasEOL: true },

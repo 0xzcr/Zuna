@@ -21,6 +21,6 @@ export function synthesisPayload({ text, voice, speed = 1, sentencePause = 0.25,
   return { text, voice, speed, sentence_pause: sentencePause, expressiveness };
 }
 
-export function audioCacheKey(index, voice, speed) {
-  return `${index}:${voice}:${speed}`;
+export function audioCacheKey(index, voice, speed, text = '') {
+  return `${index}:${voice}:${speed}${text ? `:${text}` : ''}`;
 }
