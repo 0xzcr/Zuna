@@ -38,13 +38,22 @@ function isChapterHeading(line) {
   return (line.length <= 120 && CHAPTER_HEADING.test(line)) || numberedHeading;
 }
 
+const ROMAN_NUMERAL = /^(?=[mdclxvi]+$)m{0,4}(?:cm|cd|d?c{0,3})(?:xc|xl|l?x{0,3})(?:ix|iv|v?i{0,3})$/i;
+
+function isStandalonePageNumber(line) {
+  const normalized = line.replace(/^[\s.,:;|()[\]{}\-–—]+|[\s.,:;|()[\]{}\-–—]+$/g, '').trim();
+  if (/^(?:page\s+)?\d{1,5}(?:\s+of\s+\d{1,5})?$/i.test(normalized)) return true;
+  const roman = normalized.replace(/^page\s+/i, '');
+  return ROMAN_NUMERAL.test(roman);
+}
+
 function cleanLines(text) {
   const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   const counts = new Map();
   lines.forEach((line) => counts.set(line, (counts.get(line) || 0) + 1));
   return lines.filter((line, index) => {
-    if (/^\d{1,4}$/.test(line)) return false;
-    const nextToPageNumber = /^\d{1,4}$/.test(lines[index - 1] || '') || /^\d{1,4}$/.test(lines[index + 1] || '');
+    if (isStandalonePageNumber(line)) return false;
+    const nextToPageNumber = isStandalonePageNumber(lines[index - 1] || '') || isStandalonePageNumber(lines[index + 1] || '');
     return (counts.get(line) || 0) < 2 || !nextToPageNumber || isChapterHeading(line);
   });
 }
@@ -152,7 +161,7 @@ export function normalizePdfPages(pages) {
   return pageLines.map((lines) => {
     const content = lines.filter((line, index) => {
       const inMargin = index < 2 || index >= lines.length - 2;
-      return !inMargin || (!/^[-–—]?\s*\d{1,5}\s*[-–—]?$/.test(line) && !repeatedMargins.has(marginKey(line)));
+      return !inMargin || (!isStandalonePageNumber(line) && !repeatedMargins.has(marginKey(line)));
     });
     return dehyphenateLines(content).join('\n');
   }).filter(Boolean).join('\n\n');
