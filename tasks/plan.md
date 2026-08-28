@@ -8,7 +8,7 @@ Recompose the Zuna website around its working local reading pipeline while borro
 
 - Keep the existing DOM IDs and data attributes consumed by `frontend/app.js`; redesign the React shell and CSS around those contracts.
 - Use local static abstract art assets from the Unsplash free-license results, with attribution in the repository documentation, so the website has no runtime image dependency.
-- Keep Aceternity-inspired effects dependency-free and use animation-safe CSS with reduced-motion fallbacks.
+- Keep animation dependency-free with CSS motion, one Intersection Observer, and reduced-motion fallbacks.
 - Remove inactive membership/marketing actions rather than redesigning them as fake functionality.
 
 ## Task List
@@ -25,7 +25,7 @@ Recompose the Zuna website around its working local reading pipeline while borro
 
 ### Phase 2: Core Website Recomposition
 
-- [x] Task 3: Recompose navigation, hero, library, voice, player, and settings surfaces.
+- [x] Task 3: Remove navigation and recompose the hero, library, voice, privacy, player, and settings surfaces as one scrolling story.
 - [x] Task 4: Apply the new art-led cards, motion, and responsive styling.
 
 ### Checkpoint: Core Features

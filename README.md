@@ -8,9 +8,9 @@ Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 
 ## Current status
 
-- Rebuilt the responsive website shell as an art-led, high-contrast listening room with an oversized
-  editorial hero, product-flow cards, and responsive navigation inspired by modern wallet/product
-  homepages.
+- Rebuilt the responsive website as a navigation-free, scroll-led listening story with oversized
+  typography, high-contrast product sections, abstract artwork, and motion inspired by modern
+  wallet/product homepages.
 - Supports EPUB, PDFs with an extractable text layer, and UTF-8, UTF-16, or Windows-1252 plain-text files.
 - Extracts PDF text in bounded four-page batches and can begin playback before the whole file
   is processed.
