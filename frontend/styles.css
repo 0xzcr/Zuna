@@ -29,7 +29,7 @@ a { color: inherit; }
 .app-frame { display: grid; grid-template-columns: 230px minmax(0, 1fr); min-height: 100vh; }
 .sidebar { position: sticky; top: 0; display: flex; height: 100vh; flex-direction: column; padding: 36px 24px 27px; border-right: 1px solid var(--line); background: color-mix(in srgb, var(--canvas) 88%, transparent); }
 .wordmark, .mobile-brand { display: inline-flex; align-items: center; gap: 4px; width: max-content; color: var(--ink); text-decoration: none; font-size: 25px; font-weight: 600; letter-spacing: -.09em; }
-.wordmark-mark { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid currentColor; border-radius: 50%; letter-spacing: 0; }.wordmark-mark span { display: block; transform: translate(1px, -1px); font: italic 20px/1 var(--serif); }
+.wordmark-mark { position: relative; display: block; width: 25px; height: 25px; border: 1px solid currentColor; border-radius: 50%; letter-spacing: 0; }.wordmark-mark span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font: italic 20px/1 var(--serif); }
 .sidebar-kicker { margin: 37px 0 0 13px; color: var(--muted); font: 10px/1.5 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .nav-links { display: grid; gap: 8px; margin-top: 48px; }
 .nav-link { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid transparent; border-radius: 9px; color: var(--muted); font-size: 13px; text-decoration: none; transition: .2s ease; }
