@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { MovingBorder, Spotlight } from './aceternity';
 
 function Wordmark({ mobile = false }) {
-  return <a className={mobile ? 'mobile-brand' : 'wordmark'} href="#home" aria-label="Zuna home"><span className="wordmark-mark">z</span><span>una</span></a>;
+  return <a className={mobile ? 'mobile-brand' : 'wordmark'} href="#home" aria-label="Zuna home"><span className="wordmark-mark"><span>z</span></span><span>una</span></a>;
 }
 
 function Navigation() {
