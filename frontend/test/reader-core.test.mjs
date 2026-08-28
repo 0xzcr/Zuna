@@ -135,6 +135,15 @@ test('narration chunks start quickly and batch later sentences without losing te
   assert.equal(chunks.join(' '), text);
 });
 
+test('default narration chunks keep first audio and background jobs responsive', () => {
+  const text = Array.from({ length: 24 }, (_, index) => `Sentence ${index + 1} carries enough words to sound natural.`).join(' ');
+  const chunks = splitIntoNarrationChunks(text);
+
+  assert.ok(chunks[0].length <= 180);
+  assert.ok(chunks.slice(1).every((chunk) => chunk.length <= 800));
+  assert.equal(chunks.join(' '), text);
+});
+
 test('chapter maps use bounded narration chunks instead of one request per sentence', () => {
   const chapter = Array.from({ length: 30 }, (_, index) => `This is sentence number ${index + 1} in the chapter.`).join(' ');
   const book = buildChapterMap(`Chapter 1\n${chapter}`);

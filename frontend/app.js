@@ -1,6 +1,7 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
-import { buildChapterMap, chapterGenerationOrder, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=10';
-import { KOKORO_BASE_URL, normalizeVoices, groupVoices, synthesisPayload } from './kokoro-runtime.mjs?v=7';
+import { buildChapterMap, chapterGenerationOrder, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=11';
+import { normalizeVoices, groupVoices, playbackPrefetchOrder, synthesisPayload } from './kokoro-runtime.mjs?v=9';
+import { browserKokoro } from './browser-kokoro.mjs';
 import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook, listCachedBooks } from './local-cache.mjs';
 
 const state = {
@@ -8,13 +9,13 @@ const state = {
   voice: localStorage.getItem('zuna-kokoro-voice') || '',
   speed: Number(localStorage.getItem('zuna-speed') || 1), fileName: localStorage.getItem('zuna-file-name') || '',
   speaking: false, theme: localStorage.getItem('zuna-theme') || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-  kokoroVoices: [], kokoroOnline: false, bookKey: '', savedBooks: [], readyPassages: new Set(), generatingChapterIndex: -1,
+  kokoroVoices: [], kokoroOnline: false, kokoroBackend: '', bookKey: '', savedBooks: [], readyPassages: new Set(), generatingChapterIndex: -1,
 };
 
 const $ = (selector) => document.querySelector(selector);
 const pdfInput = $('#pdfInput'); const dropZone = $('#dropZone'); const libraryPanel = $('#libraryPanel');
 const passage = $('#passage'); const seek = $('#seek'); const playButton = $('#playButton'); const toast = $('#toast'); const engineNote = $('#engineNote');
-const audioCache = new Map(); const audioJobs = new Map(); let activeAudio = null; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0;
+const audioCache = new Map(); const audioJobs = new Map(); let activeAudio = null; let queuedAudio = null; let queuedAudioIndex = -1; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0;
 
 function applyTheme(theme) {
   state.theme = theme; document.documentElement.dataset.theme = theme; localStorage.setItem('zuna-theme', theme);
@@ -33,12 +34,12 @@ function renderVoicePicker() {
   const select = $('#voiceSelect'); if (!select) return;
   const picker = document.querySelector('.voice-picker');
   let retry = $('#retryKokoro');
-  if (!retry && picker) { retry = document.createElement('button'); retry.id = 'retryKokoro'; retry.className = 'retry-button'; retry.type = 'button'; retry.textContent = 'Retry connection'; retry.addEventListener('click', loadKokoroVoices); picker.append(retry); }
+  if (!retry && picker) { retry = document.createElement('button'); retry.id = 'retryKokoro'; retry.className = 'retry-button'; retry.type = 'button'; retry.textContent = 'Retry model'; retry.addEventListener('click', loadKokoroVoices); picker.append(retry); }
   if (retry) retry.hidden = state.kokoroOnline;
   select.replaceChildren();
   if (!state.kokoroVoices.length) {
-    const option = document.createElement('option'); option.textContent = 'Start the local Kokoro runtime…'; select.append(option); select.disabled = true;
-    const count = $('#voiceCount'); if (count) count.textContent = 'Runtime offline'; return;
+    const option = document.createElement('option'); option.textContent = 'Loading Kokoro on this device…'; select.append(option); select.disabled = true;
+    const count = $('#voiceCount'); if (count) count.textContent = 'Model loading'; return;
   }
   groupVoices(state.kokoroVoices).forEach(({ label, voices }) => {
     const group = document.createElement('optgroup'); group.label = label;
@@ -55,11 +56,15 @@ function chooseVoice(voice) {
 
 async function loadKokoroVoices() {
   try {
-    const response = await fetch(`${KOKORO_BASE_URL}/voices`, { cache: 'no-store', signal: AbortSignal.timeout(5000) }); if (!response.ok) throw new Error('Voice endpoint unavailable');
-    state.kokoroVoices = normalizeVoices(await response.json()); state.kokoroOnline = state.kokoroVoices.length > 0;
+    const result = await browserKokoro().load((detail) => {
+      if (detail.status === 'fallback') setEngineNote('WebGPU unavailable · switching to optimized WASM…');
+      else if (detail.status === 'progress' && Number.isFinite(detail.progress)) setEngineNote(`Downloading Kokoro ${detail.backend.toUpperCase()} once · ${Math.round(detail.progress)}%`);
+      else if (detail.status === 'loading') setEngineNote(`Starting Kokoro with ${detail.backend.toUpperCase()}…`);
+    });
+    state.kokoroVoices = normalizeVoices(result.voices); state.kokoroOnline = state.kokoroVoices.length > 0; state.kokoroBackend = result.backend;
     if (!state.kokoroVoices.includes(state.voice)) { state.voice = state.kokoroVoices[0] || ''; if (state.voice) localStorage.setItem('zuna-kokoro-voice', state.voice); }
-    setEngineNote(state.kokoroOnline ? `Kokoro local runtime · ${state.kokoroVoices.length} voices · all free` : 'Kokoro runtime is online but has no voice pack.');
-  } catch { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote('Kokoro is offline · see backend/README.md to start the local runtime'); }
+    setEngineNote(state.kokoroOnline ? `Kokoro runs on this device · ${state.kokoroBackend.toUpperCase()} · ${state.kokoroVoices.length} free voices` : 'Kokoro loaded without a compatible voice pack.');
+  } catch (error) { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote(`Kokoro could not start · ${error.message}`); }
   renderVoicePicker(); if (state.kokoroOnline && state.documentComplete) startBackgroundGeneration();
 }
 
@@ -128,24 +133,25 @@ function finishDocument(text, name, key) {
 function renderPassage() { const current = state.passages[state.index]; state.chapterIndex = current ? chapterForPassage(state.index) : state.chapterIndex; const chapter = state.chapters[state.chapterIndex]; updateChapterSelection(); $('#nowPlayingLabel').textContent = state.fileName ? `${state.fileName} · ${chapter?.title || 'Full book'}` : 'Choose a document to begin'; $('#progressLabel').textContent = state.passages.length ? `${state.index + 1} / ${state.passages.length}` : '0 / 0'; seek.value = state.index; if (!current) { passage.innerHTML = '<span class="passage-placeholder">Your current passage will appear here.</span>'; return; } passage.textContent = current; localStorage.setItem(`zuna-progress:${state.fileName}`, String(state.index)); }
 
 function setPlayState(playing) { state.speaking = playing; playButton.textContent = playing ? 'Ⅱ' : '▶'; playButton.setAttribute('aria-label', playing ? 'Pause' : 'Play'); playButton.setAttribute('aria-pressed', String(playing)); }
-function clearAudioCache() { generationRun += 1; audioCache.forEach((url) => URL.revokeObjectURL(url)); audioCache.clear(); state.readyPassages.clear(); state.generatingChapterIndex = -1; state.chapters.forEach((_, index) => updateChapterCard(index)); }
-function stopAudio() { playbackRun += 1; if (activeAudio) { activeAudio.pause(); activeAudio.removeAttribute('src'); activeAudio = null; } setPlayState(false); }
+function cancelPendingGeneration() { browserKokoro().cancelSynthesis(); audioJobs.clear(); }
+function clearAudioCache() { generationRun += 1; cancelPendingGeneration(); audioCache.forEach((url) => URL.revokeObjectURL(url)); audioCache.clear(); state.readyPassages.clear(); state.generatingChapterIndex = -1; state.chapters.forEach((_, index) => updateChapterCard(index)); }
+function discardAudio(audio) { if (!audio) return; audio.pause(); audio.removeAttribute('src'); }
+function stopAudio() { playbackRun += 1; discardAudio(activeAudio); discardAudio(queuedAudio); activeAudio = null; queuedAudio = null; queuedAudioIndex = -1; setPlayState(false); }
 
 function narrationContext() { return `${state.bookKey}|${state.voice}|${state.speed}`; }
 function markPassageReady(index, context) { if (context !== narrationContext() || state.readyPassages.has(index)) return; state.readyPassages.add(index); updateChapterCard(chapterForPassage(index)); }
 function setGeneratingChapter(index) { const previous = state.generatingChapterIndex; state.generatingChapterIndex = index; if (previous >= 0) updateChapterCard(previous); if (index >= 0) updateChapterCard(index); }
 
 async function generateAudio(index) {
-  if (!state.kokoroOnline || !state.voice) throw new Error('Start the local Kokoro runtime and choose a voice first.');
+  if (!state.kokoroOnline || !state.voice) throw new Error('Wait for Kokoro to finish loading, then choose a voice.');
   const text = state.passages[index]; const context = narrationContext();
   const key = audioStorageKey({ bookKey: state.bookKey || state.fileName, index, voice: state.voice, speed: state.speed, text });
   if (audioCache.has(key)) { markPassageReady(index, context); return audioCache.get(key); }
   if (audioJobs.has(key)) { const url = await audioJobs.get(key); markPassageReady(index, context); return url; }
   const job = (async () => { const stored = await getCachedAudio(key); if (stored) { const storedUrl = URL.createObjectURL(stored); audioCache.set(key, storedUrl); return storedUrl; }
-    const response = await fetch(`${KOKORO_BASE_URL}/synthesize`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(synthesisPayload({ text, voice: state.voice, speed: state.speed })) });
-    if (!response.ok) { let message = 'Kokoro could not generate this passage.'; try { message = (await response.json()).error || message; } catch {} throw new Error(message); }
-    const blob = await response.blob(); cacheAudio(key, blob); const url = URL.createObjectURL(blob); audioCache.set(key, url); return url; })();
-  audioJobs.set(key, job); try { const url = await job; markPassageReady(index, context); return url; } finally { audioJobs.delete(key); }
+    const blob = await browserKokoro().synthesize(synthesisPayload({ text, voice: state.voice, speed: state.speed }));
+    cacheAudio(key, blob); const url = URL.createObjectURL(blob); audioCache.set(key, url); return url; })();
+  audioJobs.set(key, job); try { const url = await job; markPassageReady(index, context); return url; } finally { if (audioJobs.get(key) === job) audioJobs.delete(key); }
 }
 
 function warmCurrentPassage() {
@@ -161,18 +167,40 @@ async function startBackgroundGeneration() {
   if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus(`All ${state.chapters.length} chapters are ready to play.`); }
 }
 
-function chooseChapter(index) { const chapter = state.chapters[index]; if (!chapter) return; const wasSpeaking = state.speaking; stopAudio(); state.chapterIndex = index; state.index = chapter.startIndex; renderPassage(); updateChapterSelection(true); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); }
+function chooseChapter(index) { const chapter = state.chapters[index]; if (!chapter) return; const wasSpeaking = state.speaking; stopAudio(); cancelPendingGeneration(); state.chapterIndex = index; state.index = chapter.startIndex; renderPassage(); updateChapterSelection(true); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); }
+function moveToPassage(index) { stopAudio(); cancelPendingGeneration(); state.index = clampProgress(index, state.passages.length); renderPassage(); warmCurrentPassage(); startBackgroundGeneration(); }
 
-async function speakCurrent() {
-  if (!state.passages.length) { notify('Add a book to begin.'); return; }
-  const run = ++playbackRun; if (activeAudio) { activeAudio.pause(); activeAudio = null; } setEngineNote(`Preparing ${state.voice || 'a Kokoro voice'} locally…`);
+async function prepareFollowingAudio(run, index) {
+  const [nextIndex, ...laterIndexes] = playbackPrefetchOrder(index, state.passages.length, 3);
+  if (nextIndex === undefined || queuedAudioIndex === nextIndex) return;
   try {
-    const url = await generateAudio(state.index); if (run !== playbackRun) return;
-    const audio = new Audio(url); activeAudio = audio; audio.onplay = () => { setPlayState(true); setEngineNote(`Kokoro local runtime · ${state.voice} · no usage charge`); };
-    audio.onended = () => { if (run !== playbackRun) return; setPlayState(false); if (state.index < state.passages.length - 1) { state.index += 1; renderPassage(); speakCurrent(); } else notify('You reached the end of this document.'); };
-    audio.onerror = () => { if (run === playbackRun) { setPlayState(false); notify('Kokoro returned an unreadable audio file.'); } };
-    if (state.index + 1 < state.passages.length) generateAudio(state.index + 1).catch(() => {}); await audio.play();
+    const nextJob = generateAudio(nextIndex); laterIndexes.forEach((passageIndex) => generateAudio(passageIndex).catch(() => {}));
+    const url = await nextJob; if (run !== playbackRun) return;
+    discardAudio(queuedAudio); queuedAudio = new Audio(url); queuedAudio.preload = 'auto'; queuedAudioIndex = nextIndex; queuedAudio.load();
+  } catch {}
+}
+
+async function playPassage(run, index, preparedAudio = null) {
+  try {
+    const audio = preparedAudio || new Audio(await generateAudio(index)); if (run !== playbackRun) return;
+    activeAudio = audio; audio.preload = 'auto';
+    audio.onplay = () => { setPlayState(true); setEngineNote(`Kokoro on-device · ${state.kokoroBackend.toUpperCase()} · ${state.voice}`); };
+    audio.onended = () => {
+      if (run !== playbackRun) return;
+      const nextIndex = index + 1; if (nextIndex >= state.passages.length) { setPlayState(false); notify('You reached the end of this document.'); return; }
+      state.index = nextIndex; renderPassage(); const nextAudio = queuedAudioIndex === nextIndex ? queuedAudio : null; queuedAudio = null; queuedAudioIndex = -1;
+      if (!nextAudio) { setPlayState(false); setEngineNote('Buffering the next passage on this device…'); }
+      playPassage(run, nextIndex, nextAudio);
+    };
+    audio.onerror = () => { if (run === playbackRun) { setPlayState(false); notify('Kokoro generated an unreadable audio file.'); } };
+    prepareFollowingAudio(run, index); await audio.play();
   } catch (error) { if (run === playbackRun) { setPlayState(false); setEngineNote(`Kokoro error · ${error.message}`); notify(error.message); } }
+}
+
+function speakCurrent() {
+  if (!state.passages.length) { notify('Add a book to begin.'); return; }
+  const run = ++playbackRun; discardAudio(activeAudio); discardAudio(queuedAudio); activeAudio = null; queuedAudio = null; queuedAudioIndex = -1;
+  setEngineNote(`Preparing ${state.voice || 'a Kokoro voice'} on this device…`); playPassage(run, state.index);
 }
 
 async function togglePlayback() {
@@ -224,7 +252,7 @@ $('#voiceSelect')?.addEventListener('change', (event) => chooseVoice(event.targe
 $('#clearButton').addEventListener('click', () => { stopAudio(); clearAudioCache(); state.chapters = []; state.passages = []; state.sourceText = ''; state.documentComplete = false; state.generationStatus = 'Import a book to prepare its chapters.'; state.index = 0; state.chapterIndex = 0; state.fileName = ''; state.bookKey = ''; pdfInput.value = ''; localStorage.removeItem('zuna-file-name'); libraryPanel.hidden = true; renderChapterPicker(); renderPassage(); renderSavedBooks(); });
 $('#chapterPrevious')?.addEventListener('click', () => $('#chapterRail')?.scrollBy({ left: -Math.max(220, $('#chapterRail').clientWidth * .75), behavior: 'smooth' }));
 $('#chapterNext')?.addEventListener('click', () => $('#chapterRail')?.scrollBy({ left: Math.max(220, $('#chapterRail').clientWidth * .75), behavior: 'smooth' }));
-playButton.addEventListener('click', togglePlayback); $('#backButton').addEventListener('click', () => { stopAudio(); state.index = Math.max(0, state.index - 1); renderPassage(); }); $('#forwardButton').addEventListener('click', () => { stopAudio(); state.index = Math.min(Math.max(0, state.passages.length - 1), state.index + 1); renderPassage(); }); seek.addEventListener('input', () => { stopAudio(); state.index = Number(seek.value); renderPassage(); });
+playButton.addEventListener('click', togglePlayback); $('#backButton').addEventListener('click', () => moveToPassage(state.index - 1)); $('#forwardButton').addEventListener('click', () => moveToPassage(state.index + 1)); seek.addEventListener('input', () => moveToPassage(Number(seek.value)));
 $('#speedSelect').value = String(state.speed); $('#speedSelect').addEventListener('change', (event) => { const wasSpeaking = state.speaking; stopAudio(); clearAudioCache(); state.speed = Number(event.target.value); localStorage.setItem('zuna-speed', state.speed); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); });
 document.querySelectorAll('[data-nav]').forEach((link) => link.addEventListener('click', () => document.querySelectorAll('[data-nav]').forEach((item) => item.classList.toggle('is-active', item.dataset.nav === link.dataset.nav))));
 window.addEventListener('focus', () => { if (!state.kokoroOnline) loadKokoroVoices(); });

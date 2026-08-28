@@ -11,7 +11,7 @@ function BrandRow() {
     <header className="brand-row">
       <Wordmark />
       <div className="brand-actions">
-        <span className="local-state"><span className="status-dot" />local runtime</span>
+        <span className="local-state"><span className="status-dot" />on-device AI</span>
         <button className="round-control theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false"><span id="themeIcon">☼</span></button>
         <button className="settings-button" id="settingsButton" type="button" aria-label="Open settings">Settings</button>
       </div>
@@ -80,18 +80,18 @@ function VoicePanel() {
     <section className="workspace-panel voice-panel" aria-labelledby="voice-title">
       <div className="panel-heading">
         <div><span className="mini-label">NARRATOR</span><h3 id="voice-title">Choose a voice.</h3></div>
-        <span className="voice-total">54</span>
+        <span className="voice-total">28</span>
       </div>
       <div className="voice-picker">
         <label className="voice-select-label" htmlFor="voiceSelect">
           <span className="voice-select-shell">
-            <select id="voiceSelect" aria-label="Choose a Kokoro narrator" disabled defaultValue=""><option value="">Connecting to local runtime…</option></select>
+            <select id="voiceSelect" aria-label="Choose a Kokoro narrator" disabled defaultValue=""><option value="">Loading Kokoro on this device…</option></select>
             <span className="select-chevron" aria-hidden="true">↓</span>
           </span>
         </label>
-        <span className="voice-count" id="voiceCount">Connecting to local runtime…</span>
+        <span className="voice-count" id="voiceCount">Model loading…</span>
       </div>
-      <div className="privacy-line"><span>0 uploads</span><span>54 free voices</span><span>local generation</span></div>
+      <div className="privacy-line"><span>0 uploads</span><span>28 free voices</span><span>on-device generation</span></div>
     </section>
   );
 }
@@ -131,7 +131,7 @@ function ReaderPage() {
       <div className="reader-shell">
         <header className="reader-heading">
           <div><p className="eyebrow">02 / Your listening room</p><h2 id="reader-title">The whole reader.<br /><em>One beautiful page.</em></h2></div>
-          <div className="reader-status"><span id="engineNote" role="status">Kokoro local runtime · checking connection…</span><button id="mobileSettingsButton" type="button">Reader settings ↗</button></div>
+          <div className="reader-status"><span id="engineNote" role="status">Starting Kokoro privately on this device…</span><button id="mobileSettingsButton" type="button">Reader settings ↗</button></div>
         </header>
         <div className="reader-workspace">
           <div className="reader-sidebar"><SourcePanel /><VoicePanel /></div>
@@ -147,7 +147,7 @@ function SettingsDialog() {
     <dialog className="settings-dialog" id="settingsDialog" aria-labelledby="settingsTitle">
       <div className="dialog-head"><div><p className="eyebrow">Your preferences</p><h2 id="settingsTitle">Settings</h2></div><button className="dialog-close" id="closeSettings" type="button" aria-label="Close settings">×</button></div>
       <div className="settings-row"><span><strong>Local storage</strong><small>Extracted books, progress, and generated audio stay in this browser.</small></span><button className="retry-button" id="clearCacheButton" type="button">Clear cache</button></div>
-      <div className="settings-row"><span><strong>Free narration</strong><small>Kokoro local runtime · all voices unlocked.</small></span><span className="settings-status">KOKORO</span></div>
+      <div className="settings-row"><span><strong>Free narration</strong><small>Kokoro runs on-device · all supported voices unlocked.</small></span><span className="settings-status">KOKORO</span></div>
     </dialog>
   );
 }

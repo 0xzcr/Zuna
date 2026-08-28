@@ -3,19 +3,18 @@
 This is the Phase 0 API skeleton. It is intentionally dependency-free and in-memory so the
 resource contracts can be tested before choosing production persistence or an auth provider.
 
-## Local Kokoro website runtime
+## Optional legacy Kokoro server
 
-The website uses the same local pattern as the Kokoro Voice Lab reference: one int8 ONNX model
-and one bundled voice pack, with every discovered voice available at no cost.
+The website now runs Kokoro directly in a browser worker and does not require this service. This
+int8 ONNX server remains available for local API and desktop integration work.
 
 ```bash
 bash backend/setup-kokoro.sh
 backend/.venv/bin/python backend/kokoro_server.py
 ```
 
-Keep the Next.js website running at `http://127.0.0.1:4173/`. The browser uses same-origin routes
-under `/api/kokoro`; Next.js streams those requests to `http://127.0.0.1:8766`. No Sarvam, Dodo,
-or browser speech fallback is used in this path.
+The optional same-origin routes under `/api/kokoro` stream requests to
+`http://127.0.0.1:8766`. The current browser reader does not call these routes.
 
 Run both Next.js and Kokoro from the repository root with `npm run dev:full`, or start them
 separately with `npm run kokoro` and `npm run dev`.

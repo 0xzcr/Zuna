@@ -2,7 +2,7 @@ export function splitIntoPassages(text) {
   return text.replace(/\s+/g, ' ').trim().match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((item) => item.trim()).filter((item) => item.length > 2) || [];
 }
 
-export function splitIntoNarrationChunks(text, { firstTarget = 280, target = 900, max = 1200 } = {}) {
+export function splitIntoNarrationChunks(text, { firstTarget = 180, target = 600, max = 800 } = {}) {
   const sentences = splitIntoPassages(text);
   if (text.trim().length <= firstTarget) return sentences;
 

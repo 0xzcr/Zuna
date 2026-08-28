@@ -1,9 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { KOKORO_BASE_URL, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey } from '../kokoro-runtime.mjs';
+import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu } from '../kokoro-runtime.mjs';
 
-test('routes Kokoro through the same-origin web server', () => {
-  assert.equal(KOKORO_BASE_URL, '/api/kokoro');
+test('loads the official Kokoro ONNX model directly in the browser', () => {
+  assert.equal(KOKORO_MODEL_ID, 'onnx-community/Kokoro-82M-v1.0-ONNX');
+  assert.deepEqual(kokoroModelOptions(true), { device: 'webgpu', dtype: 'fp32' });
+  assert.deepEqual(kokoroModelOptions(false), { device: 'wasm', dtype: 'q8' });
+});
+
+test('remembers a device that needs the reliable WASM fallback', () => {
+  assert.equal(shouldPreferWebGpu(true, ''), true);
+  assert.equal(shouldPreferWebGpu(true, 'webgpu'), true);
+  assert.equal(shouldPreferWebGpu(true, 'wasm'), false);
+  assert.equal(shouldPreferWebGpu(false, ''), false);
 });
 
 test('normalizes the Kokoro voice list and keeps every valid voice', () => {
@@ -27,4 +36,10 @@ test('separates cached audio by passage, voice, and speed', () => {
   assert.equal(audioCacheKey(3, 'af_heart', 1), '3:af_heart:1');
   assert.notEqual(audioCacheKey(3, 'af_heart', 1), audioCacheKey(3, 'am_adam', 1));
   assert.notEqual(audioCacheKey(3, 'af_heart', 1, 'First book.'), audioCacheKey(3, 'af_heart', 1, 'Second book.'));
+});
+
+test('prefetches the next passages without crossing the end of the book', () => {
+  assert.deepEqual(playbackPrefetchOrder(3, 8, 3), [4, 5, 6]);
+  assert.deepEqual(playbackPrefetchOrder(6, 8, 3), [7]);
+  assert.deepEqual(playbackPrefetchOrder(7, 8, 3), []);
 });
