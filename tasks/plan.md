@@ -1,84 +1,56 @@
-# Implementation Plan: Zuna rebuild and Next.js migration
+# Implementation Plan: Zuna Website Redesign
 
 ## Overview
 
-Rebuild Zuna as a guest-first, local-first audiobook reader with a polished web surface, a shared backend for paid narration and billing, and a React Native mobile client. The implementation follows the specification's phase order: web foundation first, then backend contracts, then the mobile client and shared pipeline.
+Recompose the Zuna website around its working local reading pipeline while borrowing MetaMask's current visual qualities: a confident oversized hero, dark editorial surfaces, clear product pillars, strong section rhythm, and art-led cards. The reader behavior and backend remain unchanged.
 
-## Architecture decisions
+## Architecture Decisions
 
-- Keep the website dependency-light while the product surface is being validated; local PDF/TXT extraction and browser speech remain usable without an account.
-- Treat the passage/chunk as the shared unit of playback so the free local path and future paid cloud path can use the same state model.
-- Keep document text and free-tier progress local. Backend records are introduced only for authenticated wallet/generation flows.
-- Keep payment and narration credentials server-side and represent pricing as configuration, not literals in UI or business logic.
-- Add the backend and mobile app as separate workspaces so each surface can be tested and deployed independently.
+- Keep the existing DOM IDs and data attributes consumed by `frontend/app.js`; redesign the React shell and CSS around those contracts.
+- Use local static abstract art assets from the Unsplash free-license results, with attribution in the repository documentation, so the website has no runtime image dependency.
+- Keep Aceternity-inspired effects dependency-free and use animation-safe CSS with reduced-motion fallbacks.
+- Remove inactive membership/marketing actions rather than redesigning them as fake functionality.
 
-## Task list
+## Task List
 
-### Website foundation
+### Phase 1: Foundation
 
-- [x] Rebuild the responsive Zuna website shell and visual system.
-- [x] Preserve local PDF/TXT import, incremental PDF extraction, narrator choice, resume state, and browser playback.
-- [x] Replace browser speech with the local Kokoro runtime, dynamic 54-voice discovery, and free WAV generation.
-- [x] Add mobile navigation, settings dialog, product promise strip, and Zuna+ teaser.
-- [x] Extract reader text cleanup/chunking into a tested pure module.
+- [x] Task 1: Add and document local abstract art assets.
+- [x] Task 2: Define the MetaMask-inspired Zuna visual system and responsive layout tokens.
 
-### Checkpoint: Website
+### Checkpoint: Foundation
 
-- [x] `npm test`, `npm run check`, and `git diff --check` pass.
-- [x] Desktop and mobile browser screenshots verified.
-- [x] Import, narrator selection, settings, and playback interactions verified.
+- [x] Existing reader DOM contracts remain present.
+- [x] No backend files or runtime endpoints change.
 
-### Phase 0: Backend skeleton
+### Phase 2: Core Website Recomposition
 
-- [x] Define user, wallet, book, and chunk state contracts.
-- [x] Implement guest-safe user creation, `$0` wallet state, and book creation endpoints.
-- [x] Add request validation, error states, security headers, rate limiting, health check, and focused API tests.
-- [x] Add environment-driven origin/port configuration with no provider secrets in client code.
+- [x] Task 3: Recompose navigation, hero, library, voice, player, and settings surfaces.
+- [x] Task 4: Apply the new art-led cards, motion, and responsive styling.
 
-### Phase 1: Mobile core loop
+### Checkpoint: Core Features
 
-- [x] Scaffold the React Native iOS/Android app.
-- [x] Add guest import/library/player flows around the shared chunk state model.
-- [x] Add the Kokoro ONNX integration seam; native extraction and ONNX generation remain next.
+- [x] Import, saved-book reopen, voice selection, chapter selection, playback, theme, and settings remain usable.
 
-### Phase 2+: Paid narration and polish
+### Phase 3: Polish
 
-- [ ] Add server-side Sarvam WebSocket generation and wallet metering.
-- [ ] Add Dodo hosted checkout and webhook handling.
-- [ ] Add Zuna+, Tier 2 chapter detection, voice preview, sleep timer, and cache policy.
+- [x] Task 5: Verify browser states, accessibility, mobile layout, tests, and production build.
+- [x] Task 6: Review, document, and commit the redesign.
 
-## Risks and mitigations
+### Checkpoint: Complete
+
+- [x] All acceptance criteria met.
+- [x] No backend changes.
+- [x] Ready for user review.
+
+## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Kokoro performance varies by device | High | Keep the first chunk small, warm the model once, and benchmark target devices before promising timing. |
-| Sarvam/Dodo contracts can change | High | Use provider adapters and environment config; verify current docs before integration. |
-| Guest and paid data boundaries drift | High | Keep local book/chunk storage separate from backend billing records. |
-| Browser and native UI diverge | Medium | Share domain contracts and state names, not platform-specific UI code. |
+| React shell changes break imperative reader bindings | High | Preserve every existing reader ID and data attribute; verify in a real browser. |
+| Large art assets slow first paint | Medium | Use compressed local images with explicit dimensions and `loading="lazy"` for below-fold art. |
+| Motion hurts accessibility or battery | Medium | Keep motion subtle and disable it under `prefers-reduced-motion`. |
 
-## Open decisions
+## Open Questions
 
-- Final auth method: email/OTP, Apple/Google OAuth, or a mix.
-- Backend persistence choice for production deployment.
-- Current Sarvam pricing/rate limits and Dodo credit primitives.
-- Region-specific external checkout vs. IAP routing.
-
-## Next.js web migration
-
-- Replace the Python static website server with a Next.js App Router application while keeping
-  the local Kokoro process as a private sidecar.
-- Proxy Kokoro through same-origin Route Handlers so browser security and deployment boundaries
-  remain explicit.
-- Preserve the existing visual language and reader behavior; migrate one working vertical slice
-  at a time rather than maintaining two active web implementations.
-- Reduce time-to-first-audio with bounded narration chunks, selected-chapter-first generation,
-  and next-chunk prefetch. Persist generated WAV blobs in IndexedDB so revisits are instant.
-- Keep PDF.js out of the initial bundle and load it only after a PDF is selected.
-
-### Migration tasks
-
-- [x] Add the minimal Next.js App Router shell and Kokoro Route Handlers.
-- [x] Move document parsing, chapter detection, chunking, and cache keys into tested modules.
-- [x] Port the responsive Zuna reader UI and connect the optimized pipeline.
-- [x] Verify build, tests, Kokoro integration, responsive UI, and performance budgets.
-- [x] Retire the legacy static server after the Next.js replacement passes all gates.
+- None blocking. The redesign uses MetaMask as a visual reference, not a copy of its branding or content.

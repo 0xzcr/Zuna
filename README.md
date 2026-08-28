@@ -8,7 +8,9 @@ Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 
 ## Current status
 
-- Rebuilt the responsive website shell with a calm, private listening-room experience.
+- Rebuilt the responsive website shell as an art-led, high-contrast listening room with an oversized
+  editorial hero, product-flow cards, and responsive navigation inspired by modern wallet/product
+  homepages.
 - Supports EPUB, PDFs with an extractable text layer, and UTF-8, UTF-16, or Windows-1252 plain-text files.
 - Extracts PDF text in bounded four-page batches and can begin playback before the whole file
   is processed.
@@ -23,6 +25,8 @@ Live deployment: [zuna-taupe.vercel.app](https://zuna-taupe.vercel.app/)
 - Keeps document text and playback state on the device. There is no login, database, upload
   API, or server-side book processing.
 - Uses the local Kokoro runtime; document text is not sent to a hosted narration provider.
+- Bundles the abstract artwork used by the redesign locally; credits and license details are in
+  `public/assets/ATTRIBUTIONS.md`.
 
 Scanned-PDF OCR, EPUB support in the mobile app, Sarvam hosted narration, wallet billing, and
 backend auth are not currently implemented. Native mobile Kokoro integration remains a later
