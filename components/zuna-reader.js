@@ -13,7 +13,7 @@ function BrandRow() {
       <div className="brand-actions">
         <span className="local-state"><span className="status-dot" />local runtime</span>
         <button className="round-control theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false"><span id="themeIcon">☼</span></button>
-        <button className="settings-button" id="settingsButton" type="button">Settings</button>
+        <button className="settings-button" id="settingsButton" type="button" aria-label="Open settings">Settings</button>
       </div>
     </header>
   );
