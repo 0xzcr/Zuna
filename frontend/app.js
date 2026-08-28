@@ -1,6 +1,6 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
 import { buildChapterMap, chapterGenerationOrder, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=11';
-import { normalizeVoices, groupVoices, playbackPrefetchOrder, synthesisPayload } from './kokoro-runtime.mjs?v=9';
+import { normalizeVoices, groupVoices, normalizeModelProgress, playbackPrefetchOrder, synthesisPayload } from './kokoro-runtime.mjs?v=10';
 import { browserKokoro } from './browser-kokoro.mjs';
 import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook, listCachedBooks } from './local-cache.mjs';
 
@@ -27,6 +27,13 @@ applyTheme(state.theme); $('#themeToggle')?.addEventListener('click', () => appl
 
 function notify(message) { toast.textContent = message; toast.classList.add('is-visible'); clearTimeout(notify.timer); notify.timer = setTimeout(() => toast.classList.remove('is-visible'), 3400); }
 function setEngineNote(message) { engineNote.textContent = message; }
+function setModelProgress(progress) {
+  const loading = $('#modelLoading'); const meter = $('#modelProgress'); const label = $('#modelProgressLabel'); if (!loading || !meter || !label) return;
+  const value = normalizeModelProgress(progress); loading.hidden = false;
+  if (value === null) { meter.removeAttribute('value'); label.textContent = 'Preparing…'; }
+  else { meter.value = value; label.textContent = `${value}%`; }
+}
+function hideModelProgress() { const loading = $('#modelLoading'); if (loading) loading.hidden = true; }
 function languageName(voice) { return ({ af: 'American English', am: 'American English', bf: 'British English', bm: 'British English', ef: 'Spanish', em: 'Spanish', ff: 'French', hf: 'Hindi', hm: 'Hindi', if: 'Italian', im: 'Italian', jf: 'Japanese', jm: 'Japanese', pf: 'Brazilian Portuguese', pm: 'Brazilian Portuguese', zf: 'Mandarin', zm: 'Mandarin' })[voice.slice(0, 2)] || 'Kokoro voice'; }
 function voiceDisplayName(voice) { return voice.slice(3).replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) || voice; }
 
@@ -57,14 +64,14 @@ function chooseVoice(voice) {
 async function loadKokoroVoices() {
   try {
     const result = await browserKokoro().load((detail) => {
-      if (detail.status === 'fallback') setEngineNote('WebGPU unavailable · switching to optimized WASM…');
-      else if (detail.status === 'progress' && Number.isFinite(detail.progress)) setEngineNote(`Downloading Kokoro ${detail.backend.toUpperCase()} once · ${Math.round(detail.progress)}%`);
-      else if (detail.status === 'loading') setEngineNote(`Starting Kokoro with ${detail.backend.toUpperCase()}…`);
+      if (detail.status === 'fallback') { setEngineNote('WebGPU unavailable · switching to optimized WASM…'); setModelProgress(0); }
+      else if (detail.status === 'progress' && Number.isFinite(detail.progress)) { const progress = normalizeModelProgress(detail.progress); setEngineNote(`Downloading Kokoro ${detail.backend.toUpperCase()} once · ${progress}%`); setModelProgress(progress); }
+      else if (detail.status === 'loading') { setEngineNote(`Starting Kokoro with ${detail.backend.toUpperCase()}…`); setModelProgress(); }
     });
     state.kokoroVoices = normalizeVoices(result.voices); state.kokoroOnline = state.kokoroVoices.length > 0; state.kokoroBackend = result.backend;
     if (!state.kokoroVoices.includes(state.voice)) { state.voice = state.kokoroVoices[0] || ''; if (state.voice) localStorage.setItem('zuna-kokoro-voice', state.voice); }
-    setEngineNote(state.kokoroOnline ? `Kokoro runs on this device · ${state.kokoroBackend.toUpperCase()} · ${state.kokoroVoices.length} free voices` : 'Kokoro loaded without a compatible voice pack.');
-  } catch (error) { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote(`Kokoro could not start · ${error.message}`); }
+    setEngineNote(state.kokoroOnline ? `Kokoro runs on this device · ${state.kokoroBackend.toUpperCase()} · ${state.kokoroVoices.length} free voices` : 'Kokoro loaded without a compatible voice pack.'); hideModelProgress();
+  } catch (error) { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote(`Kokoro could not start · ${error.message}`); hideModelProgress(); }
   renderVoicePicker(); if (state.kokoroOnline && state.documentComplete) startBackgroundGeneration();
 }
 

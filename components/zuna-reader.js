@@ -131,7 +131,14 @@ function ReaderPage() {
       <div className="reader-shell">
         <header className="reader-heading">
           <div><p className="eyebrow">02 / Your listening room</p><h2 id="reader-title">The whole reader.<br /><em>One beautiful page.</em></h2></div>
-          <div className="reader-status"><span id="engineNote" role="status">Starting Kokoro privately on this device…</span><button id="mobileSettingsButton" type="button">Reader settings ↗</button></div>
+          <div className="reader-status">
+            <span id="engineNote" role="status">Starting Kokoro privately on this device…</span>
+            <div className="model-loading" id="modelLoading">
+              <div><strong>Loading Kokoro</strong><output id="modelProgressLabel" htmlFor="modelProgress">0%</output></div>
+              <progress id="modelProgress" max="100" value="0" aria-label="Kokoro model loading progress" aria-describedby="engineNote" />
+            </div>
+            <button id="mobileSettingsButton" type="button">Reader settings ↗</button>
+          </div>
         </header>
         <div className="reader-workspace">
           <div className="reader-sidebar"><SourcePanel /><VoicePanel /></div>

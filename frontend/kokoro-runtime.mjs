@@ -1,5 +1,9 @@
 export const KOKORO_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 
+export function normalizeModelProgress(progress) {
+  return Number.isFinite(progress) ? Math.min(100, Math.max(0, Math.round(progress))) : null;
+}
+
 export function kokoroModelOptions(hasWebGpu) {
   return hasWebGpu ? { device: 'webgpu', dtype: 'fp32' } : { device: 'wasm', dtype: 'q8' };
 }

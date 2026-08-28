@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu } from '../kokoro-runtime.mjs';
+import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu, normalizeModelProgress } from '../kokoro-runtime.mjs';
 
 test('loads the official Kokoro ONNX model directly in the browser', () => {
   assert.equal(KOKORO_MODEL_ID, 'onnx-community/Kokoro-82M-v1.0-ONNX');
@@ -13,6 +13,13 @@ test('remembers a device that needs the reliable WASM fallback', () => {
   assert.equal(shouldPreferWebGpu(true, 'webgpu'), true);
   assert.equal(shouldPreferWebGpu(true, 'wasm'), false);
   assert.equal(shouldPreferWebGpu(false, ''), false);
+});
+
+test('normalizes model download progress for the loading bar', () => {
+  assert.equal(normalizeModelProgress(41.6), 42);
+  assert.equal(normalizeModelProgress(-4), 0);
+  assert.equal(normalizeModelProgress(108), 100);
+  assert.equal(normalizeModelProgress(undefined), null);
 });
 
 test('normalizes the Kokoro voice list and keeps every valid voice', () => {
