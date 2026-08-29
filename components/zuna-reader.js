@@ -129,7 +129,7 @@ function ReaderPage() {
       <div className="reader-art" aria-hidden="true"><img src="/assets/zuna-abstract-blue-brown.webp" alt="" width="1200" height="1792" loading="lazy" /></div>
       <div className="reader-shell">
         <header className="reader-heading">
-          <div><p className="eyebrow">02 / Your listening room</p><h2 id="reader-title">The whole reader.</h2></div>
+          <div><p className="eyebrow">02 / Your listening room</p><h2 id="reader-title">Zuna Reader</h2></div>
           <div className="reader-status">
             <div className="model-loading" id="modelLoading">
               <div><strong>Loading Kokoro</strong><output id="modelProgressLabel" htmlFor="modelProgress">0%</output></div>
