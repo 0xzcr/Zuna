@@ -9,7 +9,7 @@ const state = {
   voice: localStorage.getItem('zuna-kokoro-voice') || '',
   speed: Number(localStorage.getItem('zuna-speed') || 1), fileName: localStorage.getItem('zuna-file-name') || '',
   speaking: false, theme: localStorage.getItem('zuna-theme') || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-  kokoroVoices: [], kokoroOnline: false, kokoroBackend: '', kokoroLoading: false, kokoroLoadAttempted: false, kokoroLoadPromise: null, bookKey: '', savedBooks: [], readyPassages: new Set(), generatingChapterIndex: -1,
+  kokoroVoices: [], kokoroOnline: false, kokoroBackend: '', kokoroLoading: false, kokoroLoadAttempted: false, kokoroLoadPromise: null, kokoroLoadPending: false, bookKey: '', savedBooks: [], readyPassages: new Set(), generatingChapterIndex: -1,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -127,7 +127,12 @@ function renderSavedBooks() {
   });
 }
 async function refreshSavedBooks() { state.savedBooks = await listCachedBooks(); renderSavedBooks(); }
-async function openSavedBook(key) { const book = await getCachedBook(key); if (!book?.text) { notify('That saved book is no longer available.'); refreshSavedBooks(); return; } extractionId += 1; setDocument(book.text, book.name || 'Saved book', true, key); loadKokoroVoices(); notify('Opened instantly from your private shelf.'); }
+async function openSavedBook(key) { const book = await getCachedBook(key); if (!book?.text) { notify('That saved book is no longer available.'); refreshSavedBooks(); return; } extractionId += 1; setDocument(book.text, book.name || 'Saved book', true, key); requestKokoroLoad(); notify('Opened instantly from your private shelf.'); }
+
+function requestKokoroLoad() {
+  if (document.visibilityState === 'hidden') { state.kokoroLoadPending = true; setEngineNote('Kokoro will load when this tab is active.'); return Promise.resolve(); }
+  state.kokoroLoadPending = false; return loadKokoroVoices();
+}
 
 function applyChapterMap(preservePosition = false) {
   const currentPassage = preservePosition ? state.passages[state.index] : null; const book = buildChapterMap(state.sourceText); state.chapters = book.chapters; state.passages = book.passages;
@@ -185,7 +190,7 @@ async function startBackgroundGeneration() {
   const run = ++generationRun; setGeneratingChapter(-1); if (!state.documentComplete) return; if (!state.passages.length) { setChapterStatus('No readable chapter text was found.'); return; }
   if (!state.kokoroOnline || !state.voice) { setChapterStatus('Generation will begin when Kokoro is online.'); return; }
   const order = chapterGenerationOrder(state.chapters, state.chapterIndex); let ready = 0;
-  for (const index of order) { if (run !== generationRun) return; const chapterIndex = chapterForPassage(index); const chapter = state.chapters[chapterIndex]; setGeneratingChapter(chapterIndex); setChapterStatus(`Preparing ${chapter.title} · ${ready} / ${order.length} passages`);
+  for (const index of order) { if (run !== generationRun) return; if (document.visibilityState === 'hidden') { setGeneratingChapter(-1); setChapterStatus('Background generation paused while this tab is inactive.'); return; } const chapterIndex = chapterForPassage(index); const chapter = state.chapters[chapterIndex]; setGeneratingChapter(chapterIndex); setChapterStatus(`Preparing ${chapter.title} · ${ready} / ${order.length} passages`);
     try { await generateAudio(index, 10); } catch { if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus('Background generation paused. Check the Kokoro runtime.'); } return; } ready += 1; }
   if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus(`All ${state.chapters.length} chapters are ready to play.`); }
 }
@@ -260,17 +265,17 @@ async function extractPdf(file, key) {
     const text = normalizePdfPages(extractedPages);
     if (!hasReadableText(text)) throw new Error('No selectable text was found. This looks like a scanned PDF and needs OCR.');
     finishDocument(text, file.name, key); shouldLoadModel = true; await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); notify(`${state.chapters.length} chapters ready to listen.`);
-  } finally { try { await pdfDocument?.cleanup(); } finally { await loadingTask.destroy(); } if (shouldLoadModel && !state.kokoroOnline) loadKokoroVoices(); }
+  } finally { try { await pdfDocument?.cleanup(); } finally { await loadingTask.destroy(); } if (shouldLoadModel && !state.kokoroOnline) requestKokoroLoad(); }
 }
 
 async function handleFile(file) {
   if (!file) return; if (file.size > 512_000_000) { notify('Choose a book smaller than 512 MB.'); return; } const key = bookStorageKey(file); const cached = await getCachedBook(key);
-  if (cached?.text) { extractionId += 1; setDocument(cached.text, cached.name || file.name, true, key); loadKokoroVoices(); notify('Opened instantly from your private cache.'); return; }
+  if (cached?.text) { extractionId += 1; setDocument(cached.text, cached.name || file.name, true, key); requestKokoroLoad(); notify('Opened instantly from your private cache.'); return; }
   const name = file.name.toLowerCase();
   try {
-    if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = decodePlainText(await file.arrayBuffer()); if (!hasReadableText(text)) throw new Error('This text file does not contain readable book text.'); setDocument(text, file.name, true, key); await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); loadKokoroVoices(); }
+    if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = decodePlainText(await file.arrayBuffer()); if (!hasReadableText(text)) throw new Error('This text file does not contain readable book text.'); setDocument(text, file.name, true, key); await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); requestKokoroLoad(); }
     else if (file.type === 'application/pdf' || name.endsWith('.pdf')) await extractPdf(file, key);
-    else if (file.type === 'application/epub+zip' || name.endsWith('.epub')) { extractionId += 1; notify('Opening EPUB chapters locally…'); const { extractEpub } = await import('./epub.mjs'); const book = await extractEpub(await file.arrayBuffer()); setDocument(book.text, book.title || file.name, true, key); await cacheBook(key, { text: book.text, name: book.title || file.name }); await refreshSavedBooks(); loadKokoroVoices(); }
+    else if (file.type === 'application/epub+zip' || name.endsWith('.epub')) { extractionId += 1; notify('Opening EPUB chapters locally…'); const { extractEpub } = await import('./epub.mjs'); const book = await extractEpub(await file.arrayBuffer()); setDocument(book.text, book.title || file.name, true, key); await cacheBook(key, { text: book.text, name: book.title || file.name }); await refreshSavedBooks(); requestKokoroLoad(); }
     else notify('Please choose a readable PDF, EPUB, or TXT book.');
   } catch (error) { console.error(error); notify(error.message || 'I could not read that book. Try a readable file.'); }
 }
@@ -284,6 +289,15 @@ $('#chapterNext')?.addEventListener('click', () => $('#chapterRail')?.scrollBy({
 playButton.addEventListener('click', togglePlayback); $('#backButton').addEventListener('click', () => moveToPassage(state.index - 1)); $('#forwardButton').addEventListener('click', () => moveToPassage(state.index + 1)); seek.addEventListener('input', () => moveToPassage(Number(seek.value)));
 $('#speedSelect').value = String(state.speed); $('#speedSelect').addEventListener('change', (event) => { const wasSpeaking = state.speaking; stopAudio(); clearAudioCache(); state.speed = Number(event.target.value); localStorage.setItem('zuna-speed', state.speed); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); });
 document.querySelectorAll('[data-nav]').forEach((link) => link.addEventListener('click', () => document.querySelectorAll('[data-nav]').forEach((item) => item.classList.toggle('is-active', item.dataset.nav === link.dataset.nav))));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    generationRun += 1;
+    if (state.documentComplete && !state.speaking) setChapterStatus('Background generation paused while this tab is inactive.');
+    return;
+  }
+  if (state.kokoroLoadPending) requestKokoroLoad();
+  if (state.kokoroOnline && state.documentComplete) startBackgroundGeneration();
+});
 const settingsDialog = $('#settingsDialog'); const openSettings = () => settingsDialog?.showModal(); $('#settingsButton')?.addEventListener('click', openSettings); $('#mobileSettingsButton')?.addEventListener('click', openSettings); $('#closeSettings')?.addEventListener('click', () => settingsDialog?.close());
 $('#clearCacheButton')?.addEventListener('click', async () => { if (!window.confirm('Remove all cached book text and generated audio from this browser?')) return; const cleared = await clearLocalCache(); if (cleared) { state.savedBooks = []; renderSavedBooks(); } notify(cleared ? 'Private book and audio cache cleared.' : 'The local cache could not be cleared.'); });
 renderChapterPicker(); renderVoicePicker(); if (state.fileName) $('#fileName').textContent = state.fileName; refreshSavedBooks();
