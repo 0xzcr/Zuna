@@ -80,6 +80,17 @@ test('normalizes PDF page-wrap hyphenation and repeated margin furniture', () =>
   assert.equal(text, 'CHAPTER ONE\nAn extraordinary morning began.\n\nThe story continues here.\n\nThe story ends here.');
 });
 
+test('removes Arabic and Roman page numbers without deleting numbers in prose', () => {
+  const text = normalizePdfPages([
+    'THE SAMPLE BOOK\niv\nCHAPTER IV\nIn 2024, the fourth room opened.\nix',
+    'THE SAMPLE BOOK\nv\nThe 2nd room stayed closed.\nx',
+    'THE SAMPLE BOOK\nvi\nThe final room opened at 3:00.\nxi',
+  ]);
+
+  assert.equal(text, 'CHAPTER IV\nIn 2024, the fourth room opened.\n\nThe 2nd room stayed closed.\n\nThe final room opened at 3:00.');
+  assert.equal(cleanText('Chapter IV\nIV\nIn 2024, the room opened.\n7\nThe 2nd room stayed closed.'), 'Chapter IV In 2024, the room opened. The 2nd room stayed closed.');
+});
+
 test('preserves repeated body prose while cleaning a document', () => {
   assert.equal(cleanText('Chapter 1\nNever again.\nNever again.\nThen silence.'), 'Chapter 1 Never again. Never again. Then silence.');
 });
@@ -132,6 +143,15 @@ test('narration chunks start quickly and batch later sentences without losing te
   assert.ok(chunks.length < splitIntoPassages(text).length);
   assert.ok(chunks[0].length <= 220);
   assert.ok(chunks.slice(1).every((chunk) => chunk.length <= 520));
+  assert.equal(chunks.join(' '), text);
+});
+
+test('default narration chunks keep first audio and background jobs responsive', () => {
+  const text = Array.from({ length: 24 }, (_, index) => `Sentence ${index + 1} carries enough words to sound natural.`).join(' ');
+  const chunks = splitIntoNarrationChunks(text);
+
+  assert.ok(chunks[0].length <= 180);
+  assert.ok(chunks.slice(1).every((chunk) => chunk.length <= 800));
   assert.equal(chunks.join(' '), text);
 });
 

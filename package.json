@@ -4,7 +4,7 @@
   "private": true,
   "description": "A private, browser-local PDF narration companion.",
   "scripts": {
-    "check": "python3 -m py_compile backend/kokoro_server.py && node --check frontend/app.js && node --check frontend/epub.mjs && node --check frontend/local-cache.mjs && node --check frontend/reader-core.mjs && node --check frontend/kokoro-runtime.mjs && node --check backend/server.mjs && node --check mobile/src/reader-state.mjs && next build",
+    "check": "python3 -m py_compile backend/kokoro_server.py && node --check frontend/app.js && node --check frontend/browser-kokoro.mjs && node --check frontend/kokoro-worker.mjs && node --check frontend/epub.mjs && node --check frontend/local-cache.mjs && node --check frontend/reader-core.mjs && node --check frontend/kokoro-runtime.mjs && node --check backend/server.mjs && node --check mobile/src/reader-state.mjs && next build",
     "test": "node --test frontend/test/*.mjs backend/test/*.mjs mobile/test/*.mjs",
     "backend": "node backend/server.mjs",
     "setup:kokoro": "bash backend/setup-kokoro.sh",
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "fflate": "^0.8.3",
+    "kokoro-js": "^1.2.1",
     "next": "^16.3.3",
     "pdfjs-dist": "^6.2.108",
     "react": "^19.2.8",
