@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu, normalizeModelProgress } from '../kokoro-runtime.mjs';
+import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu, normalizeModelProgress, createAudioLru } from '../kokoro-runtime.mjs';
 
 test('loads the official Kokoro ONNX model directly in the browser', () => {
   assert.equal(KOKORO_MODEL_ID, 'onnx-community/Kokoro-82M-v1.0-ONNX');
@@ -49,4 +49,31 @@ test('prefetches the next passages without crossing the end of the book', () => 
   assert.deepEqual(playbackPrefetchOrder(3, 8, 3), [4, 5, 6]);
   assert.deepEqual(playbackPrefetchOrder(6, 8, 3), [7]);
   assert.deepEqual(playbackPrefetchOrder(7, 8, 3), []);
+});
+
+test('evicts the oldest unpinned audio when the memory budget is exceeded', () => {
+  const evicted = [];
+  const cache = createAudioLru(10, (key, value) => evicted.push([key, value]));
+  cache.set('first', 'url:first', 6);
+  cache.set('second', 'url:second', 5);
+
+  assert.equal(cache.get('first'), undefined);
+  assert.equal(cache.get('second'), 'url:second');
+  assert.deepEqual(evicted, [['first', 'url:first']]);
+  assert.equal(cache.bytes, 5);
+});
+
+test('protects active audio until it is unpinned', () => {
+  const evicted = [];
+  const cache = createAudioLru(10, (key) => evicted.push(key));
+  cache.set('playing', 'url:playing', 8);
+  cache.pin('playing');
+  cache.set('next', 'url:next', 8);
+
+  assert.equal(cache.get('playing'), 'url:playing');
+  assert.equal(cache.get('next'), undefined);
+  assert.deepEqual(evicted, ['next']);
+
+  cache.unpin('playing');
+  assert.deepEqual(evicted, ['next']);
 });

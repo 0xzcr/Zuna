@@ -40,3 +40,43 @@ export function audioCacheKey(index, voice, speed, text = '') {
 export function playbackPrefetchOrder(index, passageCount, lookahead = 3) {
   return Array.from({ length: Math.max(0, Math.min(lookahead, passageCount - index - 1)) }, (_, offset) => index + offset + 1);
 }
+
+export const AUDIO_MEMORY_LIMIT_BYTES = 32 * 1024 * 1024;
+
+export function createAudioLru(maxBytes = AUDIO_MEMORY_LIMIT_BYTES, onEvict = () => {}) {
+  const limit = Math.max(1, Number(maxBytes) || AUDIO_MEMORY_LIMIT_BYTES);
+  const entries = new Map();
+  let bytes = 0;
+
+  function remove(key) {
+    const entry = entries.get(key);
+    if (!entry) return false;
+    entries.delete(key); bytes -= entry.bytes; onEvict(key, entry.value); return true;
+  }
+
+  function trim() {
+    while (bytes > limit) {
+      const candidate = [...entries].find(([, entry]) => !entry.pinned);
+      if (!candidate) break;
+      remove(candidate[0]);
+    }
+  }
+
+  return {
+    get(key) {
+      const entry = entries.get(key);
+      if (!entry) return undefined;
+      entries.delete(key); entries.set(key, entry); return entry.value;
+    },
+    has: (key) => entries.has(key),
+    set(key, value, size = 0) {
+      remove(key); entries.set(key, { value, bytes: Math.max(0, Number(size) || 0), pinned: false }); bytes += Math.max(0, Number(size) || 0); trim(); return entries.has(key);
+    },
+    pin(key) { const entry = entries.get(key); if (entry) entry.pinned = true; return Boolean(entry); },
+    unpin(key) { const entry = entries.get(key); if (entry) { entry.pinned = false; trim(); } return Boolean(entry); },
+    delete: remove,
+    clear() { [...entries.keys()].forEach(remove); },
+    get size() { return entries.size; },
+    get bytes() { return bytes; },
+  };
+}
