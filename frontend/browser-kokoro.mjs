@@ -34,12 +34,12 @@ class BrowserKokoro {
     const worker = this.worker; this.worker = null; worker?.terminate(); this.pending.forEach(({ reject }) => reject(error)); this.pending.clear(); this.progressWatch = null;
   }
 
-  request(type, payload = {}) {
+  request(type, payload = {}, priority = 0) {
     if (!this.worker) this.startWorker();
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { type, resolve, reject });
-      this.worker.postMessage({ id, type, ...payload });
+      this.worker.postMessage({ id, type, priority, ...payload });
     });
   }
 
@@ -79,21 +79,19 @@ class BrowserKokoro {
     return this.request('load', { preferWebGpu: true }).finally(() => { clearTimeout(timer); this.progressWatch = null; });
   }
 
-  async synthesize(payload) {
+  async synthesize(payload, { priority = 50 } = {}) {
     await this.load();
-    const result = await this.request('synthesize', { payload, generation: this.generation });
+    const result = await this.request('synthesize', { payload, generation: this.generation }, priority);
     return new Blob([result.audio], { type: 'audio/wav' });
   }
 
   cancelSynthesis() {
     this.generation += 1;
     const error = new DOMException('Narration request was superseded.', 'AbortError');
-    let wasGenerating = false;
     this.pending.forEach((request, id) => {
-      if (request.type === 'synthesize') { wasGenerating = true; request.reject(error); this.pending.delete(id); }
+      if (request.type === 'synthesize') { request.reject(error); this.pending.delete(id); }
     });
-    if (wasGenerating) { this.stopWorker(error); this.loadPromise = null; this.startWorker(); }
-    else this.worker?.postMessage({ type: 'cancel', generation: this.generation });
+    this.worker?.postMessage({ type: 'cancel', generation: this.generation });
   }
 }
 

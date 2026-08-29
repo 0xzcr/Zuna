@@ -1,6 +1,6 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
 import { buildChapterMap, chapterGenerationOrder, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=11';
-import { normalizeVoices, groupVoices, normalizeModelProgress, playbackPrefetchOrder, synthesisPayload } from './kokoro-runtime.mjs?v=10';
+import { normalizeVoices, groupVoices, normalizeModelProgress, playbackPrefetchOrder, synthesisPayload, createAudioLru } from './kokoro-runtime.mjs?v=10';
 import { browserKokoro } from './browser-kokoro.mjs';
 import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook, listCachedBooks } from './local-cache.mjs';
 
@@ -15,7 +15,7 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const pdfInput = $('#pdfInput'); const dropZone = $('#dropZone'); const libraryPanel = $('#libraryPanel');
 const passage = $('#passage'); const seek = $('#seek'); const playButton = $('#playButton'); const toast = $('#toast'); const engineNote = $('#engineNote');
-const audioCache = new Map(); const audioJobs = new Map(); let activeAudio = null; let queuedAudio = null; let queuedAudioIndex = -1; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0;
+const audioCache = createAudioLru(undefined, (_key, url) => URL.revokeObjectURL(url)); const audioJobs = new Map(); let activeAudio = null; let activeAudioKey = ''; let queuedAudio = null; let queuedAudioKey = ''; let queuedAudioIndex = -1; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0;
 
 function applyTheme(theme) {
   state.theme = theme; document.documentElement.dataset.theme = theme; localStorage.setItem('zuna-theme', theme);
@@ -149,28 +149,29 @@ function renderPassage() { const current = state.passages[state.index]; state.ch
 
 function setPlayState(playing) { state.speaking = playing; playButton.textContent = playing ? 'Ⅱ' : '▶'; playButton.setAttribute('aria-label', playing ? 'Pause' : 'Play'); playButton.setAttribute('aria-pressed', String(playing)); }
 function cancelPendingGeneration() { browserKokoro().cancelSynthesis(); audioJobs.clear(); }
-function clearAudioCache() { generationRun += 1; cancelPendingGeneration(); audioCache.forEach((url) => URL.revokeObjectURL(url)); audioCache.clear(); state.readyPassages.clear(); state.generatingChapterIndex = -1; state.chapters.forEach((_, index) => updateChapterCard(index)); }
-function discardAudio(audio) { if (!audio) return; audio.pause(); audio.removeAttribute('src'); }
-function stopAudio() { playbackRun += 1; discardAudio(activeAudio); discardAudio(queuedAudio); activeAudio = null; queuedAudio = null; queuedAudioIndex = -1; setPlayState(false); }
+function clearAudioCache() { generationRun += 1; cancelPendingGeneration(); audioCache.clear(); state.readyPassages.clear(); state.generatingChapterIndex = -1; state.chapters.forEach((_, index) => updateChapterCard(index)); }
+function discardAudio(audio) { if (!audio) return; audio.pause(); audio.removeAttribute('src'); audio.load(); }
+function stopAudio() { playbackRun += 1; if (activeAudioKey) audioCache.unpin(activeAudioKey); if (queuedAudioKey) audioCache.unpin(queuedAudioKey); discardAudio(activeAudio); discardAudio(queuedAudio); activeAudio = null; activeAudioKey = ''; queuedAudio = null; queuedAudioKey = ''; queuedAudioIndex = -1; setPlayState(false); }
 
 function narrationContext() { return `${state.bookKey}|${state.voice}|${state.speed}`; }
+function passageAudioKey(index) { const text = state.passages[index]; return text ? audioStorageKey({ bookKey: state.bookKey || state.fileName, index, voice: state.voice, speed: state.speed, text }) : ''; }
 function markPassageReady(index, context) { if (context !== narrationContext() || state.readyPassages.has(index)) return; state.readyPassages.add(index); updateChapterCard(chapterForPassage(index)); }
 function setGeneratingChapter(index) { const previous = state.generatingChapterIndex; state.generatingChapterIndex = index; if (previous >= 0) updateChapterCard(previous); if (index >= 0) updateChapterCard(index); }
 
-async function generateAudio(index) {
+async function generateAudio(index, priority = 50) {
   if (!state.kokoroOnline || !state.voice) throw new Error('Wait for Kokoro to finish loading, then choose a voice.');
   const text = state.passages[index]; const context = narrationContext();
   const key = audioStorageKey({ bookKey: state.bookKey || state.fileName, index, voice: state.voice, speed: state.speed, text });
   if (audioCache.has(key)) { markPassageReady(index, context); return audioCache.get(key); }
   if (audioJobs.has(key)) { const url = await audioJobs.get(key); markPassageReady(index, context); return url; }
-  const job = (async () => { const stored = await getCachedAudio(key); if (stored) { const storedUrl = URL.createObjectURL(stored); audioCache.set(key, storedUrl); return storedUrl; }
-    const blob = await browserKokoro().synthesize(synthesisPayload({ text, voice: state.voice, speed: state.speed }));
-    cacheAudio(key, blob); const url = URL.createObjectURL(blob); audioCache.set(key, url); return url; })();
+  const job = (async () => { const stored = await getCachedAudio(key); if (stored) { const storedUrl = URL.createObjectURL(stored); audioCache.set(key, storedUrl, stored.size); return storedUrl; }
+    const blob = await browserKokoro().synthesize(synthesisPayload({ text, voice: state.voice, speed: state.speed }), { priority });
+    cacheAudio(key, blob); const url = URL.createObjectURL(blob); audioCache.set(key, url, blob.size); return url; })();
   audioJobs.set(key, job); try { const url = await job; markPassageReady(index, context); return url; } finally { if (audioJobs.get(key) === job) audioJobs.delete(key); }
 }
 
 function warmCurrentPassage() {
-  if (state.kokoroOnline && state.voice && state.passages[state.index]) generateAudio(state.index).catch(() => {});
+  if (state.kokoroOnline && state.voice && state.passages[state.index]) generateAudio(state.index, 80).catch(() => {});
 }
 
 async function startBackgroundGeneration() {
@@ -178,7 +179,7 @@ async function startBackgroundGeneration() {
   if (!state.kokoroOnline || !state.voice) { setChapterStatus('Generation will begin when Kokoro is online.'); return; }
   const order = chapterGenerationOrder(state.chapters, state.chapterIndex); let ready = 0;
   for (const index of order) { if (run !== generationRun) return; const chapterIndex = chapterForPassage(index); const chapter = state.chapters[chapterIndex]; setGeneratingChapter(chapterIndex); setChapterStatus(`Preparing ${chapter.title} · ${ready} / ${order.length} passages`);
-    try { await generateAudio(index); } catch { if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus('Background generation paused. Check the Kokoro runtime.'); } return; } ready += 1; }
+    try { await generateAudio(index, 10); } catch { if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus('Background generation paused. Check the Kokoro runtime.'); } return; } ready += 1; }
   if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus(`All ${state.chapters.length} chapters are ready to play.`); }
 }
 
@@ -189,23 +190,27 @@ async function prepareFollowingAudio(run, index) {
   const [nextIndex, ...laterIndexes] = playbackPrefetchOrder(index, state.passages.length, 3);
   if (nextIndex === undefined || queuedAudioIndex === nextIndex) return;
   try {
-    const nextJob = generateAudio(nextIndex); laterIndexes.forEach((passageIndex) => generateAudio(passageIndex).catch(() => {}));
+    const nextJob = generateAudio(nextIndex, 40); laterIndexes.forEach((passageIndex) => generateAudio(passageIndex, 5).catch(() => {}));
     const url = await nextJob; if (run !== playbackRun) return;
+    if (queuedAudioKey) audioCache.unpin(queuedAudioKey);
     discardAudio(queuedAudio); queuedAudio = new Audio(url); queuedAudio.preload = 'auto'; queuedAudioIndex = nextIndex; queuedAudio.load();
+    queuedAudioKey = passageAudioKey(nextIndex); audioCache.pin(queuedAudioKey);
   } catch {}
 }
 
-async function playPassage(run, index, preparedAudio = null) {
+async function playPassage(run, index, preparedAudio = null, preparedKey = '') {
   try {
-    const audio = preparedAudio || new Audio(await generateAudio(index)); if (run !== playbackRun) return;
+    const audio = preparedAudio || new Audio(await generateAudio(index, 100)); if (run !== playbackRun) return;
+    const key = preparedKey || passageAudioKey(index); audioCache.pin(key); activeAudioKey = key;
     activeAudio = audio; audio.preload = 'auto';
     audio.onplay = () => { setPlayState(true); setEngineNote(`Kokoro on-device · ${state.kokoroBackend.toUpperCase()} · ${state.voice}`); };
     audio.onended = () => {
       if (run !== playbackRun) return;
       const nextIndex = index + 1; if (nextIndex >= state.passages.length) { setPlayState(false); notify('You reached the end of this document.'); return; }
-      state.index = nextIndex; renderPassage(); const nextAudio = queuedAudioIndex === nextIndex ? queuedAudio : null; queuedAudio = null; queuedAudioIndex = -1;
+      const previousKey = activeAudioKey; if (previousKey) audioCache.unpin(previousKey); activeAudioKey = '';
+      state.index = nextIndex; renderPassage(); const nextAudio = queuedAudioIndex === nextIndex ? queuedAudio : null; const nextKey = nextAudio ? queuedAudioKey : ''; if (!nextAudio && queuedAudioKey) audioCache.unpin(queuedAudioKey); queuedAudio = null; queuedAudioKey = ''; queuedAudioIndex = -1;
       if (!nextAudio) { setPlayState(false); setEngineNote('Buffering the next passage on this device…'); }
-      playPassage(run, nextIndex, nextAudio);
+      playPassage(run, nextIndex, nextAudio, nextKey);
     };
     audio.onerror = () => { if (run === playbackRun) { setPlayState(false); notify('Kokoro generated an unreadable audio file.'); } };
     prepareFollowingAudio(run, index); await audio.play();

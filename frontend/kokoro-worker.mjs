@@ -4,7 +4,8 @@ import { KOKORO_MODEL_ID, kokoroModelOptions } from './kokoro-runtime.mjs';
 let modelPromise;
 let activeBackend = '';
 let activeGeneration = 0;
-let queue = Promise.resolve();
+const requestQueue = [];
+let draining = false;
 
 function progress(detail) {
   self.postMessage({ type: 'progress', ...detail });
@@ -52,6 +53,7 @@ async function handle({ id, type, payload, preferWebGpu, generation }) {
     if (type !== 'synthesize') throw new Error(`Unknown speech worker request: ${type}`);
     if (generation !== activeGeneration) throw new Error('Narration request was superseded.');
     const audio = await model.generate(payload.text, { voice: payload.voice, speed: payload.speed });
+    if (generation !== activeGeneration) throw new Error('Narration request was superseded.');
     const wav = audio.toWav();
     self.postMessage({ id, type: 'audio', audio: wav }, [wav]);
   } catch (error) {
@@ -59,7 +61,22 @@ async function handle({ id, type, payload, preferWebGpu, generation }) {
   }
 }
 
+async function drainQueue() {
+  if (draining) return;
+  draining = true;
+  try {
+    while (requestQueue.length) {
+      requestQueue.sort((left, right) => (right.priority || 0) - (left.priority || 0));
+      await handle(requestQueue.shift());
+    }
+  } finally {
+    draining = false;
+    if (requestQueue.length) drainQueue();
+  }
+}
+
 self.onmessage = ({ data }) => {
   if (data.type === 'cancel') { activeGeneration = data.generation; return; }
-  queue = queue.then(() => handle(data));
+  requestQueue.push(data);
+  drainQueue();
 };
