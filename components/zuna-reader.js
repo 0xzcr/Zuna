@@ -47,7 +47,7 @@ function SourcePanel() {
   return (
     <section className="workspace-panel source-panel" aria-labelledby="source-title">
       <div className="panel-heading">
-        <div><span className="mini-label">YOUR LIBRARY</span><h3 id="source-title">Bring a book.</h3></div>
+        <div><span className="mini-label">YOUR LIBRARY</span><h3 id="source-title">Your books</h3></div>
         <span className="panel-index">01</span>
       </div>
 
