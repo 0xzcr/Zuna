@@ -26,7 +26,7 @@ function applyTheme(theme) {
 applyTheme(state.theme); $('#themeToggle')?.addEventListener('click', () => applyTheme(state.theme === 'dark' ? 'light' : 'dark'));
 
 function notify(message) { toast.textContent = message; toast.classList.add('is-visible'); clearTimeout(notify.timer); notify.timer = setTimeout(() => toast.classList.remove('is-visible'), 3400); }
-function setEngineNote(message) { engineNote.textContent = message; }
+function setEngineNote(message) { if (engineNote) engineNote.textContent = message; }
 function setModelProgress(progress) {
   const loading = $('#modelLoading'); const meter = $('#modelProgress'); const label = $('#modelProgressLabel'); if (!loading || !meter || !label) return;
   const value = normalizeModelProgress(progress); loading.hidden = false;

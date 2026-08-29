@@ -130,14 +130,12 @@ function ReaderPage() {
       <div className="reader-art" aria-hidden="true"><img src="/assets/zuna-abstract-blue-brown.webp" alt="" width="1200" height="1792" loading="lazy" /></div>
       <div className="reader-shell">
         <header className="reader-heading">
-          <div><p className="eyebrow">02 / Your listening room</p><h2 id="reader-title">The whole reader.<br /><em>One beautiful page.</em></h2></div>
+          <div><p className="eyebrow">02 / Your listening room</p><h2 id="reader-title">The whole reader.</h2></div>
           <div className="reader-status">
-            <span id="engineNote" role="status">Starting Kokoro privately on this device…</span>
             <div className="model-loading" id="modelLoading">
               <div><strong>Loading Kokoro</strong><output id="modelProgressLabel" htmlFor="modelProgress">0%</output></div>
-              <progress id="modelProgress" max="100" value="0" aria-label="Kokoro model loading progress" aria-describedby="engineNote" />
+              <progress id="modelProgress" max="100" value="0" aria-label="Kokoro model loading progress" />
             </div>
-            <button id="mobileSettingsButton" type="button">Reader settings ↗</button>
           </div>
         </header>
         <div className="reader-workspace">
