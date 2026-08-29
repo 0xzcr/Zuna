@@ -56,14 +56,15 @@ class BrowserKokoro {
   }
 
   async loadFastestBackend() {
-    const preferWebGpu = shouldPreferWebGpu(Boolean(navigator.gpu), localStorage.getItem('zuna-kokoro-backend'));
+    const isMobile = navigator.userAgentData?.mobile ?? /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || '');
+    const preferWebGpu = shouldPreferWebGpu(Boolean(navigator.gpu), localStorage.getItem('zuna-kokoro-backend'), navigator.deviceMemory, navigator.hardwareConcurrency, isMobile);
     if (!preferWebGpu) return this.request('load', { preferWebGpu: false });
     try {
       const result = await this.loadWebGpuWithWatchdog(); localStorage.setItem('zuna-kokoro-backend', result.backend); return result;
     } catch (error) {
-      if (error.code !== 'WEBGPU_STALL') throw error;
+      if (error.code !== 'WEBGPU_STALL' && error.code !== 'WEBGPU_FAILED') throw error;
       localStorage.setItem('zuna-kokoro-backend', 'wasm'); this.listeners.forEach((listener) => listener({ type: 'progress', status: 'fallback', backend: 'wasm' }));
-      this.startWorker(); return this.request('load', { preferWebGpu: false });
+      this.stopWorker(error); this.startWorker(); return this.request('load', { preferWebGpu: false });
     }
   }
 
@@ -76,7 +77,11 @@ class BrowserKokoro {
       }, WEBGPU_STALL_MS);
     };
     this.progressWatch = arm; arm();
-    return this.request('load', { preferWebGpu: true }).finally(() => { clearTimeout(timer); this.progressWatch = null; });
+    return this.request('load', { preferWebGpu: true }).catch((error) => {
+      const fallbackError = new Error(`WebGPU initialization failed: ${error.message}`);
+      fallbackError.code = 'WEBGPU_FAILED';
+      throw fallbackError;
+    }).finally(() => { clearTimeout(timer); this.progressWatch = null; });
   }
 
   async synthesize(payload, { priority = 50 } = {}) {

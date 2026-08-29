@@ -13,6 +13,9 @@ test('remembers a device that needs the reliable WASM fallback', () => {
   assert.equal(shouldPreferWebGpu(true, 'webgpu'), true);
   assert.equal(shouldPreferWebGpu(true, 'wasm'), false);
   assert.equal(shouldPreferWebGpu(false, ''), false);
+  assert.equal(shouldPreferWebGpu(true, '', 4), false);
+  assert.equal(shouldPreferWebGpu(true, '', 8), true);
+  assert.equal(shouldPreferWebGpu(true, '', undefined, 4, true), false);
 });
 
 test('normalizes model download progress for the loading bar', () => {

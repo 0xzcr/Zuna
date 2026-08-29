@@ -9,7 +9,7 @@ const state = {
   voice: localStorage.getItem('zuna-kokoro-voice') || '',
   speed: Number(localStorage.getItem('zuna-speed') || 1), fileName: localStorage.getItem('zuna-file-name') || '',
   speaking: false, theme: localStorage.getItem('zuna-theme') || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-  kokoroVoices: [], kokoroOnline: false, kokoroBackend: '', bookKey: '', savedBooks: [], readyPassages: new Set(), generatingChapterIndex: -1,
+  kokoroVoices: [], kokoroOnline: false, kokoroBackend: '', kokoroLoading: false, kokoroLoadAttempted: false, kokoroLoadPromise: null, bookKey: '', savedBooks: [], readyPassages: new Set(), generatingChapterIndex: -1,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -41,12 +41,13 @@ function renderVoicePicker() {
   const select = $('#voiceSelect'); if (!select) return;
   const picker = document.querySelector('.voice-picker');
   let retry = $('#retryKokoro');
-  if (!retry && picker) { retry = document.createElement('button'); retry.id = 'retryKokoro'; retry.className = 'retry-button'; retry.type = 'button'; retry.textContent = 'Retry model'; retry.addEventListener('click', loadKokoroVoices); picker.append(retry); }
+  if (!retry && picker) { retry = document.createElement('button'); retry.id = 'retryKokoro'; retry.className = 'retry-button'; retry.type = 'button'; retry.addEventListener('click', loadKokoroVoices); picker.append(retry); }
   if (retry) retry.hidden = state.kokoroOnline;
+  if (retry) { retry.disabled = state.kokoroLoading; retry.textContent = state.kokoroLoading ? 'Loading…' : state.kokoroLoadAttempted ? 'Retry model' : 'Load Kokoro'; }
   select.replaceChildren();
   if (!state.kokoroVoices.length) {
-    const option = document.createElement('option'); option.textContent = 'Loading Kokoro on this device…'; select.append(option); select.disabled = true;
-    const count = $('#voiceCount'); if (count) count.textContent = 'Model loading'; return;
+    const option = document.createElement('option'); option.textContent = state.kokoroLoading ? 'Loading Kokoro on this device…' : 'Load Kokoro to choose a voice'; select.append(option); select.disabled = true;
+    const count = $('#voiceCount'); if (count) count.textContent = state.kokoroLoading ? 'Model loading' : 'Loads when you need it'; return;
   }
   groupVoices(state.kokoroVoices).forEach(({ label, voices }) => {
     const group = document.createElement('optgroup'); group.label = label;
@@ -62,17 +63,23 @@ function chooseVoice(voice) {
 }
 
 async function loadKokoroVoices() {
-  try {
-    const result = await browserKokoro().load((detail) => {
-      if (detail.status === 'fallback') { setEngineNote('WebGPU unavailable · switching to optimized WASM…'); setModelProgress(0); }
-      else if (detail.status === 'progress' && Number.isFinite(detail.progress)) { const progress = normalizeModelProgress(detail.progress); setEngineNote(`Downloading Kokoro ${detail.backend.toUpperCase()} once · ${progress}%`); setModelProgress(progress); }
-      else if (detail.status === 'loading') { setEngineNote(`Starting Kokoro with ${detail.backend.toUpperCase()}…`); setModelProgress(); }
-    });
-    state.kokoroVoices = normalizeVoices(result.voices); state.kokoroOnline = state.kokoroVoices.length > 0; state.kokoroBackend = result.backend;
-    if (!state.kokoroVoices.includes(state.voice)) { state.voice = state.kokoroVoices[0] || ''; if (state.voice) localStorage.setItem('zuna-kokoro-voice', state.voice); }
-    setEngineNote(state.kokoroOnline ? `Kokoro runs on this device · ${state.kokoroBackend.toUpperCase()} · ${state.kokoroVoices.length} free voices` : 'Kokoro loaded without a compatible voice pack.'); hideModelProgress();
-  } catch (error) { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote(`Kokoro could not start · ${error.message}`); hideModelProgress(); }
-  renderVoicePicker(); if (state.kokoroOnline && state.documentComplete) startBackgroundGeneration();
+  if (state.kokoroOnline) return;
+  if (state.kokoroLoadPromise) return state.kokoroLoadPromise;
+  state.kokoroLoading = true; state.kokoroLoadAttempted = true; renderVoicePicker();
+  state.kokoroLoadPromise = (async () => {
+    try {
+      const result = await browserKokoro().load((detail) => {
+        if (detail.status === 'fallback') { setEngineNote('WebGPU unavailable · switching to optimized WASM…'); setModelProgress(0); }
+        else if (detail.status === 'progress' && Number.isFinite(detail.progress)) { const progress = normalizeModelProgress(detail.progress); setEngineNote(`Downloading Kokoro ${detail.backend.toUpperCase()} once · ${progress}%`); setModelProgress(progress); }
+        else if (detail.status === 'loading') { setEngineNote(`Starting Kokoro with ${detail.backend.toUpperCase()}…`); setModelProgress(); }
+      });
+      state.kokoroVoices = normalizeVoices(result.voices); state.kokoroOnline = state.kokoroVoices.length > 0; state.kokoroBackend = result.backend;
+      if (!state.kokoroVoices.includes(state.voice)) { state.voice = state.kokoroVoices[0] || ''; if (state.voice) localStorage.setItem('zuna-kokoro-voice', state.voice); }
+      setEngineNote(state.kokoroOnline ? `Kokoro runs on this device · ${state.kokoroBackend.toUpperCase()} · ${state.kokoroVoices.length} free voices` : 'Kokoro loaded without a compatible voice pack.'); hideModelProgress();
+    } catch (error) { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote(`Kokoro could not start · ${error.message}`); hideModelProgress(); }
+    state.kokoroLoading = false; state.kokoroLoadPromise = null; renderVoicePicker(); if (state.kokoroOnline && state.documentComplete) startBackgroundGeneration();
+  })();
+  return state.kokoroLoadPromise;
 }
 
 function chapterForPassage(index) { return Math.max(0, state.chapters.findIndex((chapter) => index >= chapter.startIndex && index <= chapter.endIndex)); }
@@ -120,7 +127,7 @@ function renderSavedBooks() {
   });
 }
 async function refreshSavedBooks() { state.savedBooks = await listCachedBooks(); renderSavedBooks(); }
-async function openSavedBook(key) { const book = await getCachedBook(key); if (!book?.text) { notify('That saved book is no longer available.'); refreshSavedBooks(); return; } extractionId += 1; setDocument(book.text, book.name || 'Saved book', true, key); notify('Opened instantly from your private shelf.'); }
+async function openSavedBook(key) { const book = await getCachedBook(key); if (!book?.text) { notify('That saved book is no longer available.'); refreshSavedBooks(); return; } extractionId += 1; setDocument(book.text, book.name || 'Saved book', true, key); loadKokoroVoices(); notify('Opened instantly from your private shelf.'); }
 
 function applyChapterMap(preservePosition = false) {
   const currentPassage = preservePosition ? state.passages[state.index] : null; const book = buildChapterMap(state.sourceText); state.chapters = book.chapters; state.passages = book.passages;
@@ -219,6 +226,7 @@ async function playPassage(run, index, preparedAudio = null, preparedKey = '') {
 
 function speakCurrent() {
   if (!state.passages.length) { notify('Add a book to begin.'); return; }
+  if (!state.kokoroOnline) { notify('Loading Kokoro on this device…'); loadKokoroVoices().then(() => { if (state.kokoroOnline) speakCurrent(); }); return; }
   const run = ++playbackRun; discardAudio(activeAudio); discardAudio(queuedAudio); activeAudio = null; queuedAudio = null; queuedAudioIndex = -1;
   setEngineNote(`Preparing ${state.voice || 'a Kokoro voice'} on this device…`); playPassage(run, state.index);
 }
@@ -232,6 +240,7 @@ async function togglePlayback() {
 async function extractPdf(file, key) {
   const currentExtraction = ++extractionId; notify('Reading your book locally…'); const pdfjs = await import('pdfjs-dist/build/pdf.mjs'); pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
   const loadingTask = pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }); let passwordCancelled = false; let pdfDocument;
+  let shouldLoadModel = false;
   loadingTask.onPassword = (updatePassword) => { const password = window.prompt('This PDF is password protected. Enter its password to open it locally:'); if (password === null) { passwordCancelled = true; loadingTask.destroy(); } else updatePassword(password); };
   try {
     try { pdfDocument = await loadingTask.promise; } catch (error) { if (passwordCancelled) throw new Error('The password-protected PDF was not opened.'); throw error; }
@@ -250,18 +259,18 @@ async function extractPdf(file, key) {
     if (currentExtraction !== extractionId) return;
     const text = normalizePdfPages(extractedPages);
     if (!hasReadableText(text)) throw new Error('No selectable text was found. This looks like a scanned PDF and needs OCR.');
-    finishDocument(text, file.name, key); await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); notify(`${state.chapters.length} chapters ready to listen.`);
-  } finally { try { await pdfDocument?.cleanup(); } finally { await loadingTask.destroy(); } }
+    finishDocument(text, file.name, key); shouldLoadModel = true; await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); notify(`${state.chapters.length} chapters ready to listen.`);
+  } finally { try { await pdfDocument?.cleanup(); } finally { await loadingTask.destroy(); } if (shouldLoadModel && !state.kokoroOnline) loadKokoroVoices(); }
 }
 
 async function handleFile(file) {
   if (!file) return; if (file.size > 512_000_000) { notify('Choose a book smaller than 512 MB.'); return; } const key = bookStorageKey(file); const cached = await getCachedBook(key);
-  if (cached?.text) { extractionId += 1; setDocument(cached.text, cached.name || file.name, true, key); notify('Opened instantly from your private cache.'); return; }
+  if (cached?.text) { extractionId += 1; setDocument(cached.text, cached.name || file.name, true, key); loadKokoroVoices(); notify('Opened instantly from your private cache.'); return; }
   const name = file.name.toLowerCase();
   try {
-    if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = decodePlainText(await file.arrayBuffer()); if (!hasReadableText(text)) throw new Error('This text file does not contain readable book text.'); setDocument(text, file.name, true, key); await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); }
+    if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = decodePlainText(await file.arrayBuffer()); if (!hasReadableText(text)) throw new Error('This text file does not contain readable book text.'); setDocument(text, file.name, true, key); await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); loadKokoroVoices(); }
     else if (file.type === 'application/pdf' || name.endsWith('.pdf')) await extractPdf(file, key);
-    else if (file.type === 'application/epub+zip' || name.endsWith('.epub')) { extractionId += 1; notify('Opening EPUB chapters locally…'); const { extractEpub } = await import('./epub.mjs'); const book = await extractEpub(await file.arrayBuffer()); setDocument(book.text, book.title || file.name, true, key); await cacheBook(key, { text: book.text, name: book.title || file.name }); await refreshSavedBooks(); }
+    else if (file.type === 'application/epub+zip' || name.endsWith('.epub')) { extractionId += 1; notify('Opening EPUB chapters locally…'); const { extractEpub } = await import('./epub.mjs'); const book = await extractEpub(await file.arrayBuffer()); setDocument(book.text, book.title || file.name, true, key); await cacheBook(key, { text: book.text, name: book.title || file.name }); await refreshSavedBooks(); loadKokoroVoices(); }
     else notify('Please choose a readable PDF, EPUB, or TXT book.');
   } catch (error) { console.error(error); notify(error.message || 'I could not read that book. Try a readable file.'); }
 }
@@ -275,8 +284,6 @@ $('#chapterNext')?.addEventListener('click', () => $('#chapterRail')?.scrollBy({
 playButton.addEventListener('click', togglePlayback); $('#backButton').addEventListener('click', () => moveToPassage(state.index - 1)); $('#forwardButton').addEventListener('click', () => moveToPassage(state.index + 1)); seek.addEventListener('input', () => moveToPassage(Number(seek.value)));
 $('#speedSelect').value = String(state.speed); $('#speedSelect').addEventListener('change', (event) => { const wasSpeaking = state.speaking; stopAudio(); clearAudioCache(); state.speed = Number(event.target.value); localStorage.setItem('zuna-speed', state.speed); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); });
 document.querySelectorAll('[data-nav]').forEach((link) => link.addEventListener('click', () => document.querySelectorAll('[data-nav]').forEach((item) => item.classList.toggle('is-active', item.dataset.nav === link.dataset.nav))));
-window.addEventListener('focus', () => { if (!state.kokoroOnline) loadKokoroVoices(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !state.kokoroOnline) loadKokoroVoices(); });
 const settingsDialog = $('#settingsDialog'); const openSettings = () => settingsDialog?.showModal(); $('#settingsButton')?.addEventListener('click', openSettings); $('#mobileSettingsButton')?.addEventListener('click', openSettings); $('#closeSettings')?.addEventListener('click', () => settingsDialog?.close());
 $('#clearCacheButton')?.addEventListener('click', async () => { if (!window.confirm('Remove all cached book text and generated audio from this browser?')) return; const cleared = await clearLocalCache(); if (cleared) { state.savedBooks = []; renderSavedBooks(); } notify(cleared ? 'Private book and audio cache cleared.' : 'The local cache could not be cleared.'); });
-renderChapterPicker(); if (state.fileName) $('#fileName').textContent = state.fileName; refreshSavedBooks(); loadKokoroVoices();
+renderChapterPicker(); renderVoicePicker(); if (state.fileName) $('#fileName').textContent = state.fileName; refreshSavedBooks();

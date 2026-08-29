@@ -26,11 +26,7 @@ async function createModel(preferWebGpu) {
   };
 
   if (canUseWebGpu) {
-    try { return await load(true); }
-    catch (error) {
-      console.warn('Kokoro WebGPU initialization failed; using WASM.', error);
-      progress({ status: 'fallback', backend: 'wasm' });
-    }
+    return load(true);
   }
   return load(false);
 }

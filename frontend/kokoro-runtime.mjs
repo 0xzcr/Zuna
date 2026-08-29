@@ -8,8 +8,11 @@ export function kokoroModelOptions(hasWebGpu) {
   return hasWebGpu ? { device: 'webgpu', dtype: 'fp32' } : { device: 'wasm', dtype: 'q8' };
 }
 
-export function shouldPreferWebGpu(hasWebGpu, savedBackend = '') {
-  return Boolean(hasWebGpu) && savedBackend !== 'wasm';
+export function shouldPreferWebGpu(hasWebGpu, savedBackend = '', deviceMemory = undefined, hardwareConcurrency = undefined, isMobile = false) {
+  const lowMemoryDevice = Number.isFinite(deviceMemory) && deviceMemory <= 4;
+  const constrainedMobile = Boolean(isMobile) && Number.isFinite(hardwareConcurrency) && hardwareConcurrency <= 6;
+  const lowCpuUnknownMemory = !Number.isFinite(deviceMemory) && Number.isFinite(hardwareConcurrency) && hardwareConcurrency <= 2;
+  return Boolean(hasWebGpu) && savedBackend !== 'wasm' && !lowMemoryDevice && !constrainedMobile && !lowCpuUnknownMemory;
 }
 
 const LANGUAGE_NAMES = { af: 'American English', am: 'American English', bf: 'British English', bm: 'British English', ef: 'Spanish', em: 'Spanish', ff: 'French', hf: 'Hindi', hm: 'Hindi', if: 'Italian', im: 'Italian', jf: 'Japanese', jm: 'Japanese', pf: 'Brazilian Portuguese', pm: 'Brazilian Portuguese', zf: 'Mandarin', zm: 'Mandarin' };
