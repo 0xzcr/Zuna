@@ -90,8 +90,6 @@ a { color: inherit; }
 
 .brand-row > * { pointer-events: auto; }
 .brand-actions { display: flex; align-items: center; gap: 10px; }
-.local-state { display: flex; align-items: center; gap: 9px; margin-right: 5px; font: 500 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #a9f283; box-shadow: 0 0 0 4px rgba(169, 242, 131, .14); }
 .round-control, .settings-button {
   height: 38px;
   border: 1px solid rgba(228, 239, 255, .78);
@@ -378,7 +376,6 @@ a { color: inherit; }
 @media (max-width: 760px) {
   .brand-row { padding: 12px 18px; }
   .wordmark { font-size: 25px; }
-  .local-state { display: none; }
   .settings-button { width: 38px; padding: 0; border-radius: 50%; font-size: 0; }
   .settings-button::after { font-size: 15px; content: '•••'; }
   .hero-stage { padding: 78px 12px 90px; }
