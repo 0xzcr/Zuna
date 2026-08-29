@@ -85,7 +85,15 @@ function updateChapterCard(index) {
   card.classList.toggle('is-ready', progress.percent === 100); card.classList.toggle('is-generating', state.generatingChapterIndex === index);
 }
 function updateChapterSelection(scroll = false) {
-  document.querySelectorAll('[data-chapter-index]').forEach((card) => { const selected = Number(card.dataset.chapterIndex) === state.chapterIndex; card.classList.toggle('is-selected', selected); card.setAttribute('aria-pressed', String(selected)); if (selected && scroll) card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); });
+  const rail = $('#chapterRail');
+  document.querySelectorAll('[data-chapter-index]').forEach((card) => {
+    const selected = Number(card.dataset.chapterIndex) === state.chapterIndex;
+    card.classList.toggle('is-selected', selected); card.setAttribute('aria-pressed', String(selected));
+    if (selected && scroll && rail) {
+      const target = card.offsetLeft - (rail.clientWidth - card.offsetWidth) / 2;
+      rail.scrollTo({ left: Math.max(0, Math.min(target, rail.scrollWidth - rail.clientWidth)), behavior: 'smooth' });
+    }
+  });
 }
 function renderChapterPicker() {
   const rail = $('#chapterRail'); if (!rail) return; rail.replaceChildren();
