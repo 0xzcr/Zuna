@@ -1,5 +1,5 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
-import { buildChapterMap, chapterGenerationOrder, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=11';
+import { buildChapterMap, chapterGenerationWindow, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=12';
 import { normalizeVoices, groupVoices, normalizeModelProgress, playbackPrefetchOrder, synthesisPayload, createAudioLru } from './kokoro-runtime.mjs?v=10';
 import { browserKokoro } from './browser-kokoro.mjs';
 import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook, listCachedBooks } from './local-cache.mjs';
@@ -189,20 +189,20 @@ function warmCurrentPassage() {
 async function startBackgroundGeneration() {
   const run = ++generationRun; setGeneratingChapter(-1); if (!state.documentComplete) return; if (!state.passages.length) { setChapterStatus('No readable chapter text was found.'); return; }
   if (!state.kokoroOnline || !state.voice) { setChapterStatus('Generation will begin when Kokoro is online.'); return; }
-  const order = chapterGenerationOrder(state.chapters, state.chapterIndex); let ready = 0;
+  const order = chapterGenerationWindow(state.chapters, state.chapterIndex, 2); let ready = 0;
   for (const index of order) { if (run !== generationRun) return; if (document.visibilityState === 'hidden') { setGeneratingChapter(-1); setChapterStatus('Background generation paused while this tab is inactive.'); return; } const chapterIndex = chapterForPassage(index); const chapter = state.chapters[chapterIndex]; setGeneratingChapter(chapterIndex); setChapterStatus(`Preparing ${chapter.title} · ${ready} / ${order.length} passages`);
-    try { await generateAudio(index, 10); } catch { if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus('Background generation paused. Check the Kokoro runtime.'); } return; } ready += 1; }
-  if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus(`All ${state.chapters.length} chapters are ready to play.`); }
+    try { await generateAudio(index, chapterIndex === state.chapterIndex ? 20 : 5); } catch { if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus('Background generation paused. Check the Kokoro runtime.'); } return; } ready += 1; }
+  if (run === generationRun) { setGeneratingChapter(-1); const windowSize = Math.min(2, Math.max(0, state.chapters.length - state.chapterIndex)); setChapterStatus(`${windowSize === 1 ? 'Current chapter' : 'Current and next chapter'} ready to play.`); }
 }
 
 function chooseChapter(index) { const chapter = state.chapters[index]; if (!chapter) return; const wasSpeaking = state.speaking; stopAudio(); cancelPendingGeneration(); state.chapterIndex = index; state.index = chapter.startIndex; renderPassage(); updateChapterSelection(true); startBackgroundGeneration(); if (wasSpeaking) speakCurrent(); }
 function moveToPassage(index) { stopAudio(); cancelPendingGeneration(); state.index = clampProgress(index, state.passages.length); renderPassage(); warmCurrentPassage(); startBackgroundGeneration(); }
 
 async function prepareFollowingAudio(run, index) {
-  const [nextIndex, ...laterIndexes] = playbackPrefetchOrder(index, state.passages.length, 3);
+  const [nextIndex] = playbackPrefetchOrder(index, state.passages.length, 1);
   if (nextIndex === undefined || queuedAudioIndex === nextIndex) return;
   try {
-    const nextJob = generateAudio(nextIndex, 40); laterIndexes.forEach((passageIndex) => generateAudio(passageIndex, 5).catch(() => {}));
+    const nextJob = generateAudio(nextIndex, 40);
     const url = await nextJob; if (run !== playbackRun) return;
     if (queuedAudioKey) audioCache.unpin(queuedAudioKey);
     discardAudio(queuedAudio); queuedAudio = new Audio(url); queuedAudio.preload = 'auto'; queuedAudioIndex = nextIndex; queuedAudio.load();

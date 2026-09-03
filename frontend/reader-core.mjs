@@ -95,6 +95,17 @@ export function chapterGenerationOrder(chapters, selectedChapterIndex = 0) {
   });
 }
 
+export function chapterGenerationWindow(chapters, selectedChapterIndex = 0, windowSize = 2) {
+  if (!chapters.length || windowSize <= 0) return [];
+  const selected = chapters[selectedChapterIndex] ? selectedChapterIndex : 0;
+  return chapters.slice(selected, selected + windowSize).flatMap((chapter) => (
+    Array.from(
+      { length: Math.max(0, chapter.endIndex - chapter.startIndex + 1) },
+      (_, offset) => chapter.startIndex + offset,
+    )
+  ));
+}
+
 export function chapterProgress(chapter, readyPassages) {
   const total = Math.max(0, chapter.endIndex - chapter.startIndex + 1);
   let ready = 0;

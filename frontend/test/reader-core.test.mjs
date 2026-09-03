@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   buildChapterMap,
   chapterGenerationOrder,
+  chapterGenerationWindow,
   chapterProgress,
   cleanText,
   decodePlainText,
@@ -37,6 +38,18 @@ test('generates the selected chapter before the rest of the book', () => {
   const book = buildChapterMap(`Chapter 1\nOne. Two.\nChapter 2\nThree. Four.`);
 
   assert.deepEqual(chapterGenerationOrder(book.chapters, 1), [2, 3, 0, 1]);
+});
+
+test('limits background generation to the selected and next chapter', () => {
+  const chapters = [
+    { startIndex: 0, endIndex: 0 },
+    { startIndex: 1, endIndex: 2 },
+    { startIndex: 3, endIndex: 4 },
+    { startIndex: 5, endIndex: 6 },
+  ];
+
+  assert.deepEqual(chapterGenerationWindow(chapters, 1), [1, 2, 3, 4]);
+  assert.deepEqual(chapterGenerationWindow(chapters, 3), [5, 6]);
 });
 
 test('reports bounded voice-generation progress for each chapter', () => {
