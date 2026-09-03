@@ -66,6 +66,7 @@ async function loadKokoroVoices() {
   if (state.kokoroOnline) return;
   if (state.kokoroLoadPromise) return state.kokoroLoadPromise;
   state.kokoroLoading = true; state.kokoroLoadAttempted = true; renderVoicePicker();
+  setModelProgress(0);
   state.kokoroLoadPromise = (async () => {
     try {
       const result = await browserKokoro().load((detail) => {

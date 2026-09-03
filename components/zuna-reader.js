@@ -131,7 +131,7 @@ function ReaderPage() {
         <header className="reader-heading">
           <div><p className="eyebrow">02 / Your listening room</p><h2 id="reader-title">Zuna Reader</h2></div>
           <div className="reader-status">
-            <div className="model-loading" id="modelLoading">
+            <div className="model-loading" id="modelLoading" hidden>
               <div><strong>Loading Kokoro</strong><output id="modelProgressLabel" htmlFor="modelProgress">0%</output></div>
               <progress id="modelProgress" max="100" value="0" aria-label="Kokoro model loading progress" />
             </div>
