@@ -301,4 +301,4 @@ document.addEventListener('visibilitychange', () => {
 });
 const settingsDialog = $('#settingsDialog'); const openSettings = () => settingsDialog?.showModal(); $('#settingsButton')?.addEventListener('click', openSettings); $('#mobileSettingsButton')?.addEventListener('click', openSettings); $('#closeSettings')?.addEventListener('click', () => settingsDialog?.close());
 $('#clearCacheButton')?.addEventListener('click', async () => { if (!window.confirm('Remove all cached book text and generated audio from this browser?')) return; const cleared = await clearLocalCache(); if (cleared) { state.savedBooks = []; renderSavedBooks(); } notify(cleared ? 'Private book and audio cache cleared.' : 'The local cache could not be cleared.'); });
-renderChapterPicker(); renderVoicePicker(); if (state.fileName) $('#fileName').textContent = state.fileName; refreshSavedBooks();
+renderChapterPicker(); renderVoicePicker(); if (state.fileName) $('#fileName').textContent = state.fileName; refreshSavedBooks(); requestKokoroLoad();

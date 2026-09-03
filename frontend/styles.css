@@ -233,6 +233,7 @@ a { color: inherit; }
 .reader-shell::before { position: absolute; top: 0; right: 0; left: 0; height: 64px; border-radius: 23px 23px 0 0; background: rgba(6, 12, 14, .96); content: ''; }
 .reader-shell > * { position: relative; z-index: 1; }
 .reader-heading { display: flex; align-items: end; justify-content: space-between; gap: 28px; padding: 0 8px; }
+.reader-heading > * { min-width: 0; }
 .eyebrow, .mini-label { font: 500 8px var(--mono); letter-spacing: .13em; text-transform: uppercase; }
 .eyebrow { margin: 0 0 9px; color: var(--accent); }
 .reader-heading h2 { margin: 0; font-size: clamp(29px, 4vw, 54px); font-weight: 800; letter-spacing: -.065em; line-height: .82; text-transform: uppercase; }
@@ -389,7 +390,7 @@ a { color: inherit; }
   .scroll-cue { justify-self: end; text-align: right; }
 
   .reader-page { min-height: 100svh; padding: 0; }
-  .reader-shell { width: 100%; height: auto; min-height: 100svh; padding: 64px 11px 18px; border: 0; border-radius: 0; }
+  .reader-shell { display: grid; grid-template-rows: auto auto; width: 100%; height: auto; min-height: 100svh; padding: 64px 11px 18px; border: 0; border-radius: 0; }
   .reader-art { width: 70vw; opacity: .18; }
   .reader-heading { align-items: start; padding: 0 3px; }
   .reader-heading h2 { font-size: clamp(27px, 8vw, 38px); }
