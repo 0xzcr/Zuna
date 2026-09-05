@@ -204,7 +204,7 @@ a { color: inherit; }
 @keyframes disc-float { 50% { transform: translateY(-24px) scale(1.15); } }
 @keyframes cue { 50% { transform: translateY(7px); } }
 
-.reader-page { padding: 14px; background: var(--reader-backdrop); color: var(--ink); }
+.reader-page { padding: 66px 14px 14px; background: var(--reader-backdrop); color: var(--ink); }
 .reader-page::before {
   position: absolute;
   inset: 0;
@@ -223,7 +223,7 @@ a { color: inherit; }
   width: min(100%, 1440px);
   height: 100%;
   margin: auto;
-  padding: 67px 18px 18px;
+  padding: 18px 18px 18px;
   border: 1px solid rgba(241, 132, 102, .72);
   border-radius: 24px;
   background: var(--shell);
@@ -389,8 +389,8 @@ a { color: inherit; }
   .hero-foot > :last-child { display: none; }
   .scroll-cue { justify-self: end; text-align: right; }
 
-  .reader-page { min-height: 100svh; padding: 0; }
-  .reader-shell { display: grid; grid-template-rows: auto auto; width: 100%; height: auto; min-height: 100svh; padding: 64px 11px 18px; border: 0; border-radius: 0; }
+  .reader-page { min-height: 100svh; padding: 64px 0 0; }
+  .reader-shell { display: grid; grid-template-rows: auto auto; width: 100%; height: auto; min-height: calc(100svh - 64px); padding: 18px 11px 18px; border: 0; border-radius: 0; }
   .reader-art { width: 70vw; opacity: .18; }
   .reader-heading { align-items: start; padding: 0 3px; }
   .reader-heading h2 { font-size: clamp(27px, 8vw, 38px); }
