@@ -25,6 +25,7 @@ function Hero() {
         <p className="hero-kicker hero-enter">Your private audiobook studio</p>
         <h1 id="welcome-title" className="hero-enter">Where your<br /><span>books</span> come alive</h1>
         <a className="hero-button hero-enter" href="#reader">Open your reader <span>↓</span></a>
+        <a className="hero-try hero-enter" href="https://zuna.live">try zuna at zuna.live</a>
         <div className="hero-orbit" aria-hidden="true">
           <span className="orbit-ring orbit-ring-one" />
           <span className="orbit-ring orbit-ring-two" />
