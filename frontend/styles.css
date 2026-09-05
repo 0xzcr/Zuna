@@ -156,18 +156,6 @@ a { color: inherit; }
 }
 .hero-button:hover { transform: translateY(-5px); background: var(--accent); }
 .hero-button span { font-size: 17px; }
-.hero-try {
-  position: relative;
-  z-index: 5;
-  margin-top: 12px;
-  color: var(--hero-ink);
-  font: 700 9px/1 var(--sans);
-  letter-spacing: .01em;
-  text-decoration: none;
-  opacity: .68;
-  transition: opacity .2s ease;
-}
-.hero-try:hover { opacity: 1; }
 .hero-orbit { position: absolute; z-index: 1; width: min(47vw, 650px); aspect-ratio: 1; pointer-events: none; }
 .art-orb {
   position: absolute;
@@ -207,7 +195,6 @@ a { color: inherit; }
 .hero-enter { animation: rise-in .8s both; }
 .hero h1.hero-enter { animation-delay: .08s; }
 .hero-button.hero-enter { animation-delay: .18s; }
-.hero-try.hero-enter { animation-delay: .24s; }
 
 @keyframes rise-in { from { transform: translateY(34px); opacity: 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
