@@ -25,6 +25,7 @@ function Hero() {
         <p className="hero-kicker hero-enter">Your private audiobook studio</p>
         <h1 id="welcome-title" className="hero-enter">Where your<br /><span>books</span> come alive</h1>
         <a className="hero-button hero-enter" href="#reader">Open your reader <span>↓</span></a>
+        <p className="first-run-note hero-enter" id="firstRunNote" role="status" aria-live="polite">First listen? Zuna is warming up on your device — it takes a little longer once, then comes back much quicker.</p>
         <div className="hero-orbit" aria-hidden="true">
           <span className="orbit-ring orbit-ring-one" />
           <span className="orbit-ring orbit-ring-two" />
@@ -132,8 +133,9 @@ function ReaderPage() {
           <div><p className="eyebrow">02 / Your listening room</p><h2 id="reader-title">Zuna Reader</h2></div>
           <div className="reader-status">
             <div className="model-loading" id="modelLoading" hidden>
-              <div><strong>Loading Kokoro</strong><output id="modelProgressLabel" htmlFor="modelProgress">0%</output></div>
+              <div><strong id="modelPhaseLabel">Downloading Kokoro</strong><output id="modelProgressLabel" htmlFor="modelProgress">0%</output></div>
               <progress id="modelProgress" max="100" value="0" aria-label="Kokoro model loading progress" />
+              <small id="modelTimeRemaining" aria-live="polite">Estimating time…</small>
             </div>
           </div>
         </header>
