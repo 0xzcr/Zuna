@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu, normalizeModelProgress, createAudioLru } from '../kokoro-runtime.mjs';
+import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu, normalizeModelProgress, estimateModelRemainingSeconds, createAudioLru } from '../kokoro-runtime.mjs';
 
 test('loads the official Kokoro ONNX model directly in the browser', () => {
   assert.equal(KOKORO_MODEL_ID, 'onnx-community/Kokoro-82M-v1.0-ONNX');
@@ -9,12 +9,12 @@ test('loads the official Kokoro ONNX model directly in the browser', () => {
 });
 
 test('remembers a device that needs the reliable WASM fallback', () => {
-  assert.equal(shouldPreferWebGpu(true, ''), true);
+  assert.equal(shouldPreferWebGpu(true, ''), false);
   assert.equal(shouldPreferWebGpu(true, 'webgpu'), true);
   assert.equal(shouldPreferWebGpu(true, 'wasm'), false);
   assert.equal(shouldPreferWebGpu(false, ''), false);
   assert.equal(shouldPreferWebGpu(true, '', 4), false);
-  assert.equal(shouldPreferWebGpu(true, '', 8), true);
+  assert.equal(shouldPreferWebGpu(true, '', 8), false);
   assert.equal(shouldPreferWebGpu(true, '', undefined, 4, true), false);
 });
 
@@ -23,6 +23,13 @@ test('normalizes model download progress for the loading bar', () => {
   assert.equal(normalizeModelProgress(-4), 0);
   assert.equal(normalizeModelProgress(108), 100);
   assert.equal(normalizeModelProgress(undefined), null);
+});
+
+test('estimates remaining model load time only after useful progress exists', () => {
+  assert.equal(estimateModelRemainingSeconds(0, 10_000), null);
+  assert.equal(estimateModelRemainingSeconds(25, 10_000), 30);
+  assert.equal(estimateModelRemainingSeconds(50, 10_000), 10);
+  assert.equal(estimateModelRemainingSeconds(100, 10_000), 0);
 });
 
 test('normalizes the Kokoro voice list and keeps every valid voice', () => {

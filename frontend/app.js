@@ -1,6 +1,6 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
 import { buildChapterMap, chapterGenerationWindow, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=12';
-import { normalizeVoices, groupVoices, normalizeModelProgress, playbackPrefetchOrder, synthesisPayload, createAudioLru } from './kokoro-runtime.mjs?v=10';
+import { normalizeVoices, groupVoices, normalizeModelProgress, estimateModelRemainingSeconds, playbackPrefetchOrder, synthesisPayload, createAudioLru } from './kokoro-runtime.mjs?v=10';
 import { browserKokoro } from './browser-kokoro.mjs';
 import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook, listCachedBooks } from './local-cache.mjs';
 
@@ -15,7 +15,7 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const pdfInput = $('#pdfInput'); const dropZone = $('#dropZone'); const libraryPanel = $('#libraryPanel');
 const passage = $('#passage'); const seek = $('#seek'); const playButton = $('#playButton'); const toast = $('#toast'); const engineNote = $('#engineNote');
-const audioCache = createAudioLru(undefined, (_key, url) => URL.revokeObjectURL(url)); const audioJobs = new Map(); let activeAudio = null; let activeAudioKey = ''; let queuedAudio = null; let queuedAudioKey = ''; let queuedAudioIndex = -1; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0;
+const audioCache = createAudioLru(undefined, (_key, url) => URL.revokeObjectURL(url)); const audioJobs = new Map(); let activeAudio = null; let activeAudioKey = ''; let queuedAudio = null; let queuedAudioKey = ''; let queuedAudioIndex = -1; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0; let modelLoadStartedAt = 0; let modelProgressValue = null; let modelProgressTimer = null; let modelSuspendTimer = null; let readerModelObserver = null;
 
 function applyTheme(theme) {
   state.theme = theme; document.documentElement.dataset.theme = theme; localStorage.setItem('zuna-theme', theme);
@@ -27,13 +27,30 @@ applyTheme(state.theme); $('#themeToggle')?.addEventListener('click', () => appl
 
 function notify(message) { toast.textContent = message; toast.classList.add('is-visible'); clearTimeout(notify.timer); notify.timer = setTimeout(() => toast.classList.remove('is-visible'), 3400); }
 function setEngineNote(message) { if (engineNote) engineNote.textContent = message; }
-function setModelProgress(progress) {
-  const loading = $('#modelLoading'); const meter = $('#modelProgress'); const label = $('#modelProgressLabel'); if (!loading || !meter || !label) return;
-  const value = normalizeModelProgress(progress); loading.hidden = false;
-  if (value === null) { meter.removeAttribute('value'); label.textContent = 'Preparing…'; }
-  else { meter.value = value; label.textContent = `${value}%`; }
+function setFirstRunNote(visible) { const note = $('#firstRunNote'); if (note) note.hidden = !visible; }
+function formatModelTimeRemaining(seconds) {
+  if (seconds === null) return 'Estimating time…';
+  if (seconds <= 0) return 'Almost ready';
+  if (seconds < 60) return `~${seconds}s remaining`;
+  return `~${Math.ceil(seconds / 60)}m remaining`;
 }
-function hideModelProgress() { const loading = $('#modelLoading'); if (loading) loading.hidden = true; }
+function updateModelTimeRemaining() {
+  const time = $('#modelTimeRemaining'); if (!time || !modelLoadStartedAt) return;
+  time.textContent = formatModelTimeRemaining(estimateModelRemainingSeconds(modelProgressValue, performance.now() - modelLoadStartedAt));
+}
+function setModelProgress(progress, phase = 'downloading') {
+  const loading = $('#modelLoading'); const meter = $('#modelProgress'); const label = $('#modelProgressLabel'); const phaseLabel = $('#modelPhaseLabel'); if (!loading || !meter || !label) return;
+  modelProgressValue = Number.isFinite(progress) ? progress : null; const value = normalizeModelProgress(progress); loading.hidden = false;
+  if (phaseLabel) phaseLabel.textContent = phase === 'starting' ? 'Starting Kokoro' : phase === 'finalizing' ? 'Finalizing Kokoro' : 'Downloading Kokoro';
+  if (value === null) { meter.removeAttribute('value'); label.textContent = '—'; }
+  else { meter.value = value; label.textContent = `${value}%`; }
+  updateModelTimeRemaining();
+}
+function startModelProgress() {
+  modelLoadStartedAt = performance.now(); modelProgressValue = 0; clearInterval(modelProgressTimer); setModelProgress(0); modelProgressTimer = setInterval(updateModelTimeRemaining, 1000);
+}
+function finishModelProgress() { clearInterval(modelProgressTimer); modelProgressTimer = null; modelLoadStartedAt = 0; modelProgressValue = null; }
+function hideModelProgress() { finishModelProgress(); const loading = $('#modelLoading'); if (loading) loading.hidden = true; }
 function languageName(voice) { return ({ af: 'American English', am: 'American English', bf: 'British English', bm: 'British English', ef: 'Spanish', em: 'Spanish', ff: 'French', hf: 'Hindi', hm: 'Hindi', if: 'Italian', im: 'Italian', jf: 'Japanese', jm: 'Japanese', pf: 'Brazilian Portuguese', pm: 'Brazilian Portuguese', zf: 'Mandarin', zm: 'Mandarin' })[voice.slice(0, 2)] || 'Kokoro voice'; }
 function voiceDisplayName(voice) { return voice.slice(3).replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) || voice; }
 
@@ -65,19 +82,25 @@ function chooseVoice(voice) {
 async function loadKokoroVoices() {
   if (state.kokoroOnline) return;
   if (state.kokoroLoadPromise) return state.kokoroLoadPromise;
-  state.kokoroLoading = true; state.kokoroLoadAttempted = true; renderVoicePicker();
-  setModelProgress(0);
+  state.kokoroLoading = true; state.kokoroLoadAttempted = true; renderVoicePicker(); setFirstRunNote(true);
+  startModelProgress();
   state.kokoroLoadPromise = (async () => {
     try {
       const result = await browserKokoro().load((detail) => {
-        if (detail.status === 'fallback') { setEngineNote('WebGPU unavailable · switching to optimized WASM…'); setModelProgress(0); }
-        else if (detail.status === 'progress' && Number.isFinite(detail.progress)) { const progress = normalizeModelProgress(detail.progress); setEngineNote(`Downloading Kokoro ${detail.backend.toUpperCase()} once · ${progress}%`); setModelProgress(progress); }
-        else if (detail.status === 'loading') { setEngineNote(`Starting Kokoro with ${detail.backend.toUpperCase()}…`); setModelProgress(); }
+        if (detail.status === 'fallback') { setEngineNote('WebGPU unavailable · switching to optimized WASM…'); modelLoadStartedAt = performance.now(); setModelProgress(0); }
+        else if (detail.status === 'progress' && Number.isFinite(detail.progress)) { const progress = normalizeModelProgress(detail.progress); const phase = progress >= 100 ? 'finalizing' : 'downloading'; setEngineNote(phase === 'finalizing' ? 'Finalizing Kokoro on this device…' : `Downloading Kokoro ${detail.backend.toUpperCase()} once · ${progress}%`); setModelProgress(detail.progress, phase); }
+        else if (detail.status === 'loading') { setEngineNote(`Starting Kokoro with ${detail.backend.toUpperCase()}…`); setModelProgress(null, 'starting'); }
+        else if (detail.status === 'ready') { setEngineNote('Kokoro is ready on this device.'); setModelProgress(100, 'finalizing'); }
       });
       state.kokoroVoices = normalizeVoices(result.voices); state.kokoroOnline = state.kokoroVoices.length > 0; state.kokoroBackend = result.backend;
       if (!state.kokoroVoices.includes(state.voice)) { state.voice = state.kokoroVoices[0] || ''; if (state.voice) localStorage.setItem('zuna-kokoro-voice', state.voice); }
-      setEngineNote(state.kokoroOnline ? `Kokoro runs on this device · ${state.kokoroBackend.toUpperCase()} · ${state.kokoroVoices.length} free voices` : 'Kokoro loaded without a compatible voice pack.'); hideModelProgress();
-    } catch (error) { state.kokoroVoices = []; state.kokoroOnline = false; setEngineNote(`Kokoro could not start · ${error.message}`); hideModelProgress(); }
+      setEngineNote(state.kokoroOnline ? `Kokoro runs on this device · ${state.kokoroBackend.toUpperCase()} · ${state.kokoroVoices.length} free voices` : 'Kokoro loaded without a compatible voice pack.'); setFirstRunNote(false); hideModelProgress();
+    } catch (error) {
+      state.kokoroVoices = []; state.kokoroOnline = false;
+      if (error?.name === 'AbortError') { state.kokoroLoadPending = true; setFirstRunNote(true); setEngineNote('Kokoro paused while this tab was inactive.'); }
+      else { setFirstRunNote(true); setEngineNote(`Kokoro could not start · ${error.message}`); }
+      hideModelProgress();
+    }
     state.kokoroLoading = false; state.kokoroLoadPromise = null; renderVoicePicker(); if (state.kokoroOnline && state.documentComplete) startBackgroundGeneration();
   })();
   return state.kokoroLoadPromise;
@@ -133,6 +156,24 @@ async function openSavedBook(key) { const book = await getCachedBook(key); if (!
 function requestKokoroLoad() {
   if (document.visibilityState === 'hidden') { state.kokoroLoadPending = true; setEngineNote('Kokoro will load when this tab is active.'); return Promise.resolve(); }
   state.kokoroLoadPending = false; return loadKokoroVoices();
+}
+
+function suspendInactiveRuntime() {
+  if (document.visibilityState !== 'hidden' || state.speaking || (!state.kokoroOnline && !state.kokoroLoading)) return;
+  generationRun += 1; stopAudio(); clearAudioCache(); browserKokoro().release();
+  state.kokoroOnline = false; state.kokoroVoices = []; state.kokoroBackend = ''; state.kokoroLoadPending = true; setFirstRunNote(true); setEngineNote('Kokoro paused while this tab was inactive.'); renderVoicePicker();
+}
+function scheduleInactiveRuntimeRelease() {
+  clearTimeout(modelSuspendTimer);
+  if (state.kokoroOnline || state.kokoroLoading) modelSuspendTimer = setTimeout(suspendInactiveRuntime, 15_000);
+}
+function watchReaderForModel() {
+  const reader = $('#reader'); if (!reader || !('IntersectionObserver' in window)) return;
+  readerModelObserver = new IntersectionObserver((entries) => {
+    if (!entries.some((entry) => entry.isIntersecting)) return;
+    readerModelObserver.disconnect(); readerModelObserver = null; requestKokoroLoad();
+  }, { rootMargin: '160px 0px' });
+  readerModelObserver.observe(reader);
 }
 
 function applyChapterMap(preservePosition = false) {
@@ -294,11 +335,14 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     generationRun += 1;
     if (state.documentComplete && !state.speaking) setChapterStatus('Background generation paused while this tab is inactive.');
+    if (state.kokoroLoading) { state.kokoroLoadPending = true; browserKokoro().release(); }
+    else scheduleInactiveRuntimeRelease();
     return;
   }
+  clearTimeout(modelSuspendTimer); modelSuspendTimer = null;
   if (state.kokoroLoadPending) requestKokoroLoad();
   if (state.kokoroOnline && state.documentComplete) startBackgroundGeneration();
 });
 const settingsDialog = $('#settingsDialog'); const openSettings = () => settingsDialog?.showModal(); $('#settingsButton')?.addEventListener('click', openSettings); $('#mobileSettingsButton')?.addEventListener('click', openSettings); $('#closeSettings')?.addEventListener('click', () => settingsDialog?.close());
 $('#clearCacheButton')?.addEventListener('click', async () => { if (!window.confirm('Remove all cached book text and generated audio from this browser?')) return; const cleared = await clearLocalCache(); if (cleared) { state.savedBooks = []; renderSavedBooks(); } notify(cleared ? 'Private book and audio cache cleared.' : 'The local cache could not be cleared.'); });
-renderChapterPicker(); renderVoicePicker(); if (state.fileName) $('#fileName').textContent = state.fileName; refreshSavedBooks(); requestKokoroLoad();
+renderChapterPicker(); renderVoicePicker(); if (state.fileName) $('#fileName').textContent = state.fileName; refreshSavedBooks(); watchReaderForModel();

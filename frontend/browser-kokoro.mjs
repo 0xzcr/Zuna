@@ -58,7 +58,11 @@ class BrowserKokoro {
   async loadFastestBackend() {
     const isMobile = navigator.userAgentData?.mobile ?? /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || '');
     const preferWebGpu = shouldPreferWebGpu(Boolean(navigator.gpu), localStorage.getItem('zuna-kokoro-backend'), navigator.deviceMemory, navigator.hardwareConcurrency, isMobile);
-    if (!preferWebGpu) return this.request('load', { preferWebGpu: false });
+    if (!preferWebGpu) {
+      const result = await this.request('load', { preferWebGpu: false });
+      localStorage.setItem('zuna-kokoro-backend', result.backend || 'wasm');
+      return result;
+    }
     try {
       const result = await this.loadWebGpuWithWatchdog(); localStorage.setItem('zuna-kokoro-backend', result.backend); return result;
     } catch (error) {
@@ -97,6 +101,12 @@ class BrowserKokoro {
       if (request.type === 'synthesize') { request.reject(error); this.pending.delete(id); }
     });
     this.worker?.postMessage({ type: 'cancel', generation: this.generation });
+  }
+
+  release() {
+    this.generation += 1;
+    this.loadPromise = null;
+    if (this.worker) this.stopWorker(new DOMException('Kokoro was paused while this tab was inactive.', 'AbortError'));
   }
 }
 

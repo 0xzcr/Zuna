@@ -12,7 +12,15 @@ export function shouldPreferWebGpu(hasWebGpu, savedBackend = '', deviceMemory = 
   const lowMemoryDevice = Number.isFinite(deviceMemory) && deviceMemory <= 4;
   const constrainedMobile = Boolean(isMobile) && Number.isFinite(hardwareConcurrency) && hardwareConcurrency <= 6;
   const lowCpuUnknownMemory = !Number.isFinite(deviceMemory) && Number.isFinite(hardwareConcurrency) && hardwareConcurrency <= 2;
-  return Boolean(hasWebGpu) && savedBackend !== 'wasm' && !lowMemoryDevice && !constrainedMobile && !lowCpuUnknownMemory;
+  return Boolean(hasWebGpu) && savedBackend === 'webgpu' && !lowMemoryDevice && !constrainedMobile && !lowCpuUnknownMemory;
+}
+
+export function estimateModelRemainingSeconds(progress, elapsedMs) {
+  const value = Number(progress);
+  if (!Number.isFinite(value) || value < 0) return null;
+  if (value >= 100) return 0;
+  if (value === 0 || !Number.isFinite(elapsedMs) || elapsedMs < 1000) return null;
+  return Math.max(1, Math.ceil((elapsedMs * (100 - value)) / value / 1000));
 }
 
 const LANGUAGE_NAMES = { af: 'American English', am: 'American English', bf: 'British English', bm: 'British English', ef: 'Spanish', em: 'Spanish', ff: 'French', hf: 'Hindi', hm: 'Hindi', if: 'Italian', im: 'Italian', jf: 'Japanese', jm: 'Japanese', pf: 'Brazilian Portuguese', pm: 'Brazilian Portuguese', zf: 'Mandarin', zm: 'Mandarin' };
