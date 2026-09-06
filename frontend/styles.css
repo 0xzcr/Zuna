@@ -236,7 +236,7 @@ a { color: inherit; }
 .reader-heading > * { min-width: 0; }
 .eyebrow, .mini-label { font: 500 8px var(--mono); letter-spacing: .13em; text-transform: uppercase; }
 .eyebrow { margin: 0 0 9px; color: var(--accent); }
-.reader-heading h2 { margin: 0; font-size: clamp(29px, 4vw, 54px); font-weight: 800; letter-spacing: -.065em; line-height: .82; text-transform: uppercase; }
+.reader-heading h2 { margin: 0; color: var(--player-ink); font-size: clamp(29px, 4vw, 54px); font-weight: 800; letter-spacing: -.065em; line-height: .82; text-transform: uppercase; }
 .reader-heading h2 em { color: var(--accent); font-family: var(--serif); font-size: .8em; font-weight: 500; text-transform: none; }
 .reader-status { display: grid; justify-items: end; gap: 9px; max-width: 330px; padding-bottom: 2px; color: var(--muted); font: 500 8px var(--mono); text-align: right; text-transform: uppercase; }
 .model-loading { width: min(100%, 260px); }
