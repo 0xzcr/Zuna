@@ -1,6 +1,6 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
 import { buildChapterMap, chapterGenerationWindow, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=12';
-import { normalizeVoices, groupVoices, normalizeModelProgress, estimateModelRemainingSeconds, playbackPrefetchOrder, synthesisPayload, createAudioLru } from './kokoro-runtime.mjs?v=10';
+import { normalizeVoices, groupVoices, normalizeModelProgress, estimateModelRemainingSeconds, playbackPrefetchOrder, synthesisPayload, createAudioLru } from './kokoro-runtime.mjs?v=11';
 import { browserKokoro } from './browser-kokoro.mjs';
 import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook, listCachedBooks } from './local-cache.mjs';
 
@@ -102,6 +102,7 @@ async function loadKokoroVoices() {
       hideModelProgress();
     }
     state.kokoroLoading = false; state.kokoroLoadPromise = null; renderVoicePicker(); if (state.kokoroOnline && state.documentComplete) startBackgroundGeneration();
+    if (state.kokoroLoadPending && document.visibilityState === 'visible') requestKokoroLoad();
   })();
   return state.kokoroLoadPromise;
 }
