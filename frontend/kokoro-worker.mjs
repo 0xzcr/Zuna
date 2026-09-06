@@ -8,6 +8,7 @@ const requestQueue = [];
 let draining = false;
 const voiceWarmups = new Map();
 const KOKORO_VOICE_ORIGIN = 'https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/main/voices';
+const VOICE_WARMUP_TIMEOUT_MS = 8_000;
 
 function warmVoiceAsset(voice) {
   if (!voice || typeof caches === 'undefined' || typeof fetch === 'undefined') return Promise.resolve(false);
@@ -19,12 +20,14 @@ function warmVoiceAsset(voice) {
     const localUrl = new URL(`/api/kokoro/voice/${encodeURIComponent(voice)}`, self.location.origin);
     const response = await fetch(localUrl, { cache: 'force-cache' });
     if (!response.ok) return false;
-    const bytes = await response.arrayBuffer();
-    await cache.put(remoteUrl, new Response(bytes, { headers: { 'content-type': 'application/octet-stream' } }));
+    await cache.put(remoteUrl, response.clone());
     return true;
   })().catch(() => false);
   voiceWarmups.set(voice, task);
-  return task;
+  return Promise.race([
+    task,
+    new Promise((resolve) => setTimeout(() => resolve(false), VOICE_WARMUP_TIMEOUT_MS)),
+  ]);
 }
 
 function progress(detail) {

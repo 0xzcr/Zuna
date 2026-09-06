@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu, normalizeModelProgress, estimateModelRemainingSeconds, createAudioLru } from '../kokoro-runtime.mjs';
+import { KOKORO_MODEL_ID, normalizeVoices, groupVoices, synthesisPayload, audioCacheKey, kokoroModelOptions, playbackPrefetchOrder, shouldPreferWebGpu, normalizeModelProgress, estimateModelRemainingSeconds, formatDuration, createAudioLru } from '../kokoro-runtime.mjs';
 
 test('loads the official Kokoro ONNX model directly in the browser', () => {
   assert.equal(KOKORO_MODEL_ID, 'onnx-community/Kokoro-82M-v1.0-ONNX');
@@ -30,6 +30,12 @@ test('estimates remaining model load time only after useful progress exists', ()
   assert.equal(estimateModelRemainingSeconds(25, 10_000), 30);
   assert.equal(estimateModelRemainingSeconds(50, 10_000), 10);
   assert.equal(estimateModelRemainingSeconds(100, 10_000), 0);
+});
+
+test('formats short generation timers without losing elapsed seconds', () => {
+  assert.equal(formatDuration(0), '0s');
+  assert.equal(formatDuration(9.8), '9s');
+  assert.equal(formatDuration(65), '1m 05s');
 });
 
 test('normalizes the Kokoro voice list and keeps every valid voice', () => {

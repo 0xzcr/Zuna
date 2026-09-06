@@ -23,6 +23,12 @@ export function estimateModelRemainingSeconds(progress, elapsedMs) {
   return Math.max(1, Math.ceil((elapsedMs * (100 - value)) / value / 1000));
 }
 
+export function formatDuration(seconds) {
+  const value = Math.max(0, Math.floor(Number(seconds) || 0));
+  if (value < 60) return `${value}s`;
+  return `${Math.floor(value / 60)}m ${String(value % 60).padStart(2, '0')}s`;
+}
+
 const LANGUAGE_NAMES = { af: 'American English', am: 'American English', bf: 'British English', bm: 'British English', ef: 'Spanish', em: 'Spanish', ff: 'French', hf: 'Hindi', hm: 'Hindi', if: 'Italian', im: 'Italian', jf: 'Japanese', jm: 'Japanese', pf: 'Brazilian Portuguese', pm: 'Brazilian Portuguese', zf: 'Mandarin', zm: 'Mandarin' };
 
 export function normalizeVoices(value) {

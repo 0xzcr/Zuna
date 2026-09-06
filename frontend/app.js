@@ -1,6 +1,6 @@
 import { processPagesInBatches } from './progressive-pages.mjs';
 import { buildChapterMap, chapterGenerationWindow, chapterProgress, clampProgress, decodePlainText, hasReadableText, normalizePdfPages, textItemsToText } from './reader-core.mjs?v=12';
-import { normalizeVoices, groupVoices, normalizeModelProgress, estimateModelRemainingSeconds, playbackPrefetchOrder, synthesisPayload, createAudioLru } from './kokoro-runtime.mjs?v=11';
+import { normalizeVoices, groupVoices, normalizeModelProgress, estimateModelRemainingSeconds, formatDuration, playbackPrefetchOrder, synthesisPayload, createAudioLru } from './kokoro-runtime.mjs?v=12';
 import { browserKokoro } from './browser-kokoro.mjs';
 import { audioStorageKey, bookStorageKey, cacheAudio, cacheBook, clearLocalCache, getCachedAudio, getCachedBook, listCachedBooks } from './local-cache.mjs';
 
@@ -15,7 +15,7 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const pdfInput = $('#pdfInput'); const dropZone = $('#dropZone'); const libraryPanel = $('#libraryPanel');
 const passage = $('#passage'); const seek = $('#seek'); const playButton = $('#playButton'); const toast = $('#toast'); const engineNote = $('#engineNote');
-const audioCache = createAudioLru(undefined, (_key, url) => URL.revokeObjectURL(url)); const audioJobs = new Map(); let activeAudio = null; let activeAudioKey = ''; let queuedAudio = null; let queuedAudioKey = ''; let queuedAudioIndex = -1; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0; let modelLoadStartedAt = 0; let modelProgressValue = null; let modelProgressTimer = null; let modelSuspendTimer = null; let readerModelObserver = null;
+const audioCache = createAudioLru(undefined, (_key, url) => URL.revokeObjectURL(url)); const audioJobs = new Map(); const chapterTimers = new Map(); let activeAudio = null; let activeAudioKey = ''; let queuedAudio = null; let queuedAudioKey = ''; let queuedAudioIndex = -1; let playbackRun = 0; let generationRun = 0; let extractionId = 0; let lastMappedPdfPage = 0; let modelLoadStartedAt = 0; let modelProgressValue = null; let modelProgressTimer = null; let modelSuspendTimer = null; let chapterTimerInterval = null; let readerModelObserver = null;
 
 function applyTheme(theme) {
   state.theme = theme; document.documentElement.dataset.theme = theme; localStorage.setItem('zuna-theme', theme);
@@ -114,7 +114,14 @@ function updateChapterCard(index) {
   const card = document.querySelector(`[data-chapter-index="${index}"]`); const chapter = state.chapters[index]; if (!card || !chapter) return;
   const progress = chapterProgress(chapter, state.readyPassages); const meter = card.querySelector('progress'); const label = card.querySelector('.chapter-card-progress');
   meter.value = progress.ready; meter.max = Math.max(1, progress.total); meter.setAttribute('aria-valuetext', `${progress.ready} of ${progress.total} passages ready`);
-  label.textContent = progress.percent === 100 ? 'Ready to play' : state.generatingChapterIndex === index ? `${progress.percent}% · generating` : `${progress.percent}% ready`;
+  const timer = chapterTimers.get(index); let timerText = '';
+  if (timer && state.generatingChapterIndex === index && progress.percent < 100) {
+    const elapsedSeconds = (performance.now() - timer.startedAt) / 1000;
+    const generated = progress.ready - timer.readyAtStart;
+    const remaining = generated > 0 && progress.total > progress.ready ? Math.ceil(((progress.total - progress.ready) * elapsedSeconds) / generated) : null;
+    timerText = ` · ${formatDuration(elapsedSeconds)}${remaining === null ? '' : ` · ~${formatDuration(remaining)} left`}`;
+  }
+  label.textContent = progress.percent === 100 ? 'Ready to play' : state.generatingChapterIndex === index ? `${progress.percent}% · generating${timerText}` : `${progress.percent}% ready`;
   card.classList.toggle('is-ready', progress.percent === 100); card.classList.toggle('is-generating', state.generatingChapterIndex === index);
 }
 function updateChapterSelection(scroll = false) {
@@ -212,7 +219,18 @@ function stopAudio() { playbackRun += 1; if (activeAudioKey) audioCache.unpin(ac
 function narrationContext() { return `${state.bookKey}|${state.voice}|${state.speed}`; }
 function passageAudioKey(index) { const text = state.passages[index]; return text ? audioStorageKey({ bookKey: state.bookKey || state.fileName, index, voice: state.voice, speed: state.speed, text }) : ''; }
 function markPassageReady(index, context) { if (context !== narrationContext() || state.readyPassages.has(index)) return; state.readyPassages.add(index); updateChapterCard(chapterForPassage(index)); }
-function setGeneratingChapter(index) { const previous = state.generatingChapterIndex; state.generatingChapterIndex = index; if (previous >= 0) updateChapterCard(previous); if (index >= 0) updateChapterCard(index); }
+function setGeneratingChapter(index) {
+  const previous = state.generatingChapterIndex;
+  state.generatingChapterIndex = index;
+  if (index < 0) {
+    clearInterval(chapterTimerInterval); chapterTimerInterval = null; chapterTimers.clear();
+  } else if (previous !== index) {
+    const progress = chapterProgress(state.chapters[index], state.readyPassages);
+    chapterTimers.set(index, { startedAt: performance.now(), readyAtStart: progress.ready });
+    if (!chapterTimerInterval) chapterTimerInterval = setInterval(() => { if (state.generatingChapterIndex >= 0) updateChapterCard(state.generatingChapterIndex); }, 1000);
+  }
+  if (previous >= 0) updateChapterCard(previous); if (index >= 0) updateChapterCard(index);
+}
 
 async function generateAudio(index, priority = 50) {
   if (!state.kokoroOnline || !state.voice) throw new Error('Wait for Kokoro to finish loading, then choose a voice.');
@@ -235,7 +253,7 @@ function warmCurrentPassage() {
 async function startBackgroundGeneration() {
   const run = ++generationRun; setGeneratingChapter(-1); if (!state.documentComplete) return; if (!state.passages.length) { setChapterStatus('No readable chapter text was found.'); return; }
   if (!state.kokoroOnline || !state.voice) { setChapterStatus('Generation will begin when Kokoro is online.'); return; }
-  const order = chapterGenerationWindow(state.chapters, state.chapterIndex, 2); let ready = 0;
+  const order = [...new Set([state.index, ...chapterGenerationWindow(state.chapters, state.chapterIndex, 2)])].filter((index) => Number.isInteger(index) && index >= 0 && index < state.passages.length); let ready = 0;
   for (const index of order) { if (run !== generationRun) return; if (document.visibilityState === 'hidden') { setGeneratingChapter(-1); setChapterStatus('Background generation paused while this tab is inactive.'); return; } const chapterIndex = chapterForPassage(index); const chapter = state.chapters[chapterIndex]; setGeneratingChapter(chapterIndex); setChapterStatus(`Preparing ${chapter.title} · ${ready} / ${order.length} passages`);
     try { await generateAudio(index, chapterIndex === state.chapterIndex ? 20 : 5); } catch { if (run === generationRun) { setGeneratingChapter(-1); setChapterStatus('Background generation paused. Check the Kokoro runtime.'); } return; } ready += 1; }
   if (run === generationRun) { setGeneratingChapter(-1); const windowSize = Math.min(2, Math.max(0, state.chapters.length - state.chapterIndex)); setChapterStatus(`${windowSize === 1 ? 'Current chapter' : 'Current and next chapter'} ready to play.`); }

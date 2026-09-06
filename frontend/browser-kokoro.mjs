@@ -98,8 +98,8 @@ class BrowserKokoro {
     const request = this.request('synthesize', { payload, generation: this.generation }, priority);
     const timeout = new Promise((_, reject) => {
       timer = setTimeout(() => {
-        this.cancelSynthesis();
         const error = new Error('Kokoro audio generation timed out. Check the voice asset connection and try again.'); error.code = 'SYNTHESIS_TIMEOUT'; reject(error);
+        this.restartWorker(error);
       }, SYNTHESIS_TIMEOUT_MS);
     });
     const result = await Promise.race([request, timeout]).finally(() => clearTimeout(timer));
@@ -113,6 +113,13 @@ class BrowserKokoro {
       if (request.type === 'synthesize') { request.reject(error); this.pending.delete(id); }
     });
     this.worker?.postMessage({ type: 'cancel', generation: this.generation });
+  }
+
+  restartWorker(error) {
+    this.generation += 1;
+    this.loadPromise = null;
+    this.stopWorker(error);
+    this.startWorker();
   }
 
   release() {
