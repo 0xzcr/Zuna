@@ -1,6 +1,7 @@
 import { shouldPreferWebGpu } from './kokoro-runtime.mjs';
 
 const WEBGPU_STALL_MS = 120_000;
+const SYNTHESIS_TIMEOUT_MS = 120_000;
 let runtime;
 
 class BrowserKokoro {
@@ -93,7 +94,15 @@ class BrowserKokoro {
 
   async synthesize(payload, { priority = 50 } = {}) {
     await this.load();
-    const result = await this.request('synthesize', { payload, generation: this.generation }, priority);
+    let timer;
+    const request = this.request('synthesize', { payload, generation: this.generation }, priority);
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        this.cancelSynthesis();
+        const error = new Error('Kokoro audio generation timed out. Check the voice asset connection and try again.'); error.code = 'SYNTHESIS_TIMEOUT'; reject(error);
+      }, SYNTHESIS_TIMEOUT_MS);
+    });
+    const result = await Promise.race([request, timeout]).finally(() => clearTimeout(timer));
     return new Blob([result.audio], { type: 'audio/wav' });
   }
 

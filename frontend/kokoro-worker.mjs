@@ -6,6 +6,26 @@ let activeBackend = '';
 let activeGeneration = 0;
 const requestQueue = [];
 let draining = false;
+const voiceWarmups = new Map();
+const KOKORO_VOICE_ORIGIN = 'https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/main/voices';
+
+function warmVoiceAsset(voice) {
+  if (!voice || typeof caches === 'undefined' || typeof fetch === 'undefined') return Promise.resolve(false);
+  if (voiceWarmups.has(voice)) return voiceWarmups.get(voice);
+  const task = (async () => {
+    const cache = await caches.open('kokoro-voices');
+    const remoteUrl = `${KOKORO_VOICE_ORIGIN}/${encodeURIComponent(voice)}.bin`;
+    if (await cache.match(remoteUrl)) return true;
+    const localUrl = new URL(`/api/kokoro/voice/${encodeURIComponent(voice)}`, self.location.origin);
+    const response = await fetch(localUrl, { cache: 'force-cache' });
+    if (!response.ok) return false;
+    const bytes = await response.arrayBuffer();
+    await cache.put(remoteUrl, new Response(bytes, { headers: { 'content-type': 'application/octet-stream' } }));
+    return true;
+  })().catch(() => false);
+  voiceWarmups.set(voice, task);
+  return task;
+}
 
 function progress(detail) {
   self.postMessage({ type: 'progress', ...detail });
@@ -48,6 +68,8 @@ async function handle({ id, type, payload, preferWebGpu, generation }) {
     }
     if (type !== 'synthesize') throw new Error(`Unknown speech worker request: ${type}`);
     if (generation !== activeGeneration) throw new Error('Narration request was superseded.');
+    const voiceReady = await warmVoiceAsset(payload.voice);
+    if (!voiceReady) progress({ status: 'voice-fallback', backend: activeBackend, voice: payload.voice });
     const audio = await model.generate(payload.text, { voice: payload.voice, speed: payload.speed });
     if (generation !== activeGeneration) throw new Error('Narration request was superseded.');
     const wav = audio.toWav();

@@ -91,6 +91,7 @@ async function loadKokoroVoices() {
         else if (detail.status === 'progress' && Number.isFinite(detail.progress)) { const progress = normalizeModelProgress(detail.progress); const phase = progress >= 100 ? 'finalizing' : 'downloading'; setEngineNote(phase === 'finalizing' ? 'Finalizing Kokoro on this device…' : `Downloading Kokoro ${detail.backend.toUpperCase()} once · ${progress}%`); setModelProgress(detail.progress, phase); }
         else if (detail.status === 'loading') { setEngineNote(`Starting Kokoro with ${detail.backend.toUpperCase()}…`); setModelProgress(null, 'starting'); }
         else if (detail.status === 'ready') { setEngineNote('Kokoro is ready on this device.'); setModelProgress(100, 'finalizing'); }
+        else if (detail.status === 'voice-fallback') setEngineNote(`Loading ${detail.voice} voice asset from the fallback connection…`);
       });
       state.kokoroVoices = normalizeVoices(result.voices); state.kokoroOnline = state.kokoroVoices.length > 0; state.kokoroBackend = result.backend;
       if (!state.kokoroVoices.includes(state.voice)) { state.voice = state.kokoroVoices[0] || ''; if (state.voice) localStorage.setItem('zuna-kokoro-voice', state.voice); }
@@ -220,7 +221,9 @@ async function generateAudio(index, priority = 50) {
   if (audioCache.has(key)) { markPassageReady(index, context); return audioCache.get(key); }
   if (audioJobs.has(key)) { const url = await audioJobs.get(key); markPassageReady(index, context); return url; }
   const job = (async () => { const stored = await getCachedAudio(key); if (stored) { const storedUrl = URL.createObjectURL(stored); audioCache.set(key, storedUrl, stored.size); return storedUrl; }
-    const blob = await browserKokoro().synthesize(synthesisPayload({ text, voice: state.voice, speed: state.speed }), { priority });
+    let blob;
+    try { blob = await browserKokoro().synthesize(synthesisPayload({ text, voice: state.voice, speed: state.speed }), { priority }); }
+    catch (error) { if (error?.name !== 'AbortError' && !/superseded/i.test(error?.message || '')) setEngineNote(`Kokoro audio failed · ${error.message}`); throw error; }
     cacheAudio(key, blob); const url = URL.createObjectURL(blob); audioCache.set(key, url, blob.size); return url; })();
   audioJobs.set(key, job); try { const url = await job; markPassageReady(index, context); return url; } finally { if (audioJobs.get(key) === job) audioJobs.delete(key); }
 }
