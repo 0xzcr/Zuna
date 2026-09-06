@@ -1,7 +1,9 @@
 :root {
   color-scheme: light;
   --page: #102f2a;
-  --reader-backdrop: #0b1113;
+  --reader-backdrop: #f1eee7;
+  --reader-shell-header: rgba(255, 250, 242, .98);
+  --reader-ink: #111514;
   --shell: rgba(244, 240, 231, .97);
   --surface: #fffaf2;
   --surface-soft: #e9e4da;
@@ -27,6 +29,8 @@ html[data-theme='dark'] {
   color-scheme: dark;
   --page: #0a1c29;
   --reader-backdrop: #070a0f;
+  --reader-shell-header: rgba(6, 12, 14, .96);
+  --reader-ink: #f2f4ef;
   --shell: rgba(15, 19, 27, .97);
   --surface: #181d27;
   --surface-soft: #222936;
@@ -206,7 +210,7 @@ a { color: inherit; }
 @keyframes disc-float { 50% { transform: translateY(-24px) scale(1.15); } }
 @keyframes cue { 50% { transform: translateY(7px); } }
 
-.reader-page { padding: 66px 14px 14px; background: var(--reader-backdrop); color: var(--ink); }
+.reader-page { padding: 66px 14px 14px; background: var(--reader-backdrop); color: var(--reader-ink); }
 .reader-page::before {
   position: absolute;
   inset: 0;
@@ -232,13 +236,13 @@ a { color: inherit; }
   box-shadow: 0 30px 100px rgba(0, 0, 0, .38);
   backdrop-filter: blur(20px);
 }
-.reader-shell::before { position: absolute; top: 0; right: 0; left: 0; height: 64px; border-radius: 23px 23px 0 0; background: rgba(6, 12, 14, .96); content: ''; }
+.reader-shell::before { position: absolute; top: 0; right: 0; left: 0; height: 64px; border-radius: 23px 23px 0 0; background: var(--reader-shell-header); content: ''; }
 .reader-shell > * { position: relative; z-index: 1; }
 .reader-heading { display: flex; align-items: end; justify-content: space-between; gap: 28px; padding: 0 8px; }
 .reader-heading > * { min-width: 0; }
 .eyebrow, .mini-label { font: 500 8px var(--mono); letter-spacing: .13em; text-transform: uppercase; }
 .eyebrow { margin: 0 0 9px; color: var(--accent); }
-.reader-heading h2 { margin: 0; color: var(--player-ink); font-size: clamp(29px, 4vw, 54px); font-weight: 800; letter-spacing: -.065em; line-height: .82; text-transform: uppercase; }
+.reader-heading h2 { margin: 0; color: var(--reader-ink); font-size: clamp(29px, 4vw, 54px); font-weight: 800; letter-spacing: -.065em; line-height: .82; text-transform: uppercase; }
 .reader-heading h2 em { color: var(--accent); font-family: var(--serif); font-size: .8em; font-weight: 500; text-transform: none; }
 .reader-status { display: grid; justify-items: end; gap: 9px; max-width: 330px; padding-bottom: 2px; color: var(--muted); font: 500 8px var(--mono); text-align: right; text-transform: uppercase; }
 .model-loading { width: min(100%, 260px); }
