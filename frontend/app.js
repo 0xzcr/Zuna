@@ -82,7 +82,7 @@ function chooseVoice(voice) {
 async function loadKokoroVoices() {
   if (state.kokoroOnline) return;
   if (state.kokoroLoadPromise) return state.kokoroLoadPromise;
-  state.kokoroLoading = true; state.kokoroLoadAttempted = true; renderVoicePicker(); setFirstRunNote(true);
+  state.kokoroLoading = true; state.kokoroLoadAttempted = true; renderVoicePicker(); setFirstRunNote(true); setEngineNote('Starting Kokoro while your book opens…');
   startModelProgress();
   state.kokoroLoadPromise = (async () => {
     try {
@@ -314,10 +314,16 @@ async function extractPdf(file, key) {
   } finally { try { await pdfDocument?.cleanup(); } finally { await loadingTask.destroy(); } if (shouldLoadModel && !state.kokoroOnline) requestKokoroLoad(); }
 }
 
+function shouldWarmModelDuringOpen(file, name) {
+  if (state.kokoroOnline || !file) return false;
+  if (!name.endsWith('.pdf')) return true;
+  const memory = Number(navigator.deviceMemory);
+  return file.size <= 24 * 1024 * 1024 && Number.isFinite(memory) && memory >= 8;
+}
+
 async function handleFile(file) {
-  if (!file) return; if (file.size > 512_000_000) { notify('Choose a book smaller than 512 MB.'); return; } const key = bookStorageKey(file); const cached = await getCachedBook(key);
+  if (!file) return; if (file.size > 512_000_000) { notify('Choose a book smaller than 512 MB.'); return; } const name = file.name.toLowerCase(); if (shouldWarmModelDuringOpen(file, name)) requestKokoroLoad(); const key = bookStorageKey(file); const cached = await getCachedBook(key);
   if (cached?.text) { extractionId += 1; setDocument(cached.text, cached.name || file.name, true, key); requestKokoroLoad(); notify('Opened instantly from your private cache.'); return; }
-  const name = file.name.toLowerCase();
   try {
     if (file.type === 'text/plain' || name.endsWith('.txt')) { extractionId += 1; const text = decodePlainText(await file.arrayBuffer()); if (!hasReadableText(text)) throw new Error('This text file does not contain readable book text.'); setDocument(text, file.name, true, key); await cacheBook(key, { text, name: file.name }); await refreshSavedBooks(); requestKokoroLoad(); }
     else if (file.type === 'application/pdf' || name.endsWith('.pdf')) await extractPdf(file, key);
