@@ -2,8 +2,20 @@ import { unzipSync } from 'fflate';
 
 const decoder = new TextDecoder();
 
+function collectMatches(source, expression) {
+  const matches = [];
+  let match;
+  while ((match = expression.exec(source)) !== null) {
+    matches.push(match);
+    if (match[0] === '') expression.lastIndex += 1;
+  }
+  return matches;
+}
+
 function attributes(source) {
-  return Object.fromEntries(Array.from(source.matchAll(/([\w:-]+)\s*=\s*["']([^"']*)["']/g), ([, key, value]) => [key, value]));
+  const result = {};
+  collectMatches(source, /([\w:-]+)\s*=\s*["']([^"']*)["']/g).forEach((match) => { result[match[1]] = match[2]; });
+  return result;
 }
 
 function directory(path) {
@@ -63,11 +75,11 @@ export async function extractEpub(input) {
   if (!packageEntry) throw new Error('This EPUB has no readable package file.');
   const packageXml = decoder.decode(packageEntry);
   const base = directory(rootPath);
-  const manifest = new Map(Array.from(packageXml.matchAll(/<item\b([^>]*)\/?\s*>/gi), ([, source]) => {
+  const manifest = new Map(collectMatches(packageXml, /<item\b([^>]*)\/?\s*>/gi).map(([, source]) => {
     const item = attributes(source);
     return [item.id, item.href];
   }).filter(([id, href]) => id && href));
-  const spine = Array.from(packageXml.matchAll(/<itemref\b([^>]*)\/?\s*>/gi), ([, source]) => attributes(source).idref).filter(Boolean);
+  const spine = collectMatches(packageXml, /<itemref\b([^>]*)\/?\s*>/gi).map(([, source]) => attributes(source).idref).filter(Boolean);
   const chapterPaths = spine.map((id) => manifest.get(id)).filter(Boolean).map((href) => resolvePath(base, href));
   const entries = unzipFiles(bytes, new Set(chapterPaths), 5_000_000, 64_000_000);
   const sections = chapterPaths.map((path) => entries[path]).filter(Boolean).map((entry) => readableText(decoder.decode(entry))).filter(Boolean);

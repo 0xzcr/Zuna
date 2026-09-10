@@ -66,7 +66,7 @@ export function buildChapterMap(text) {
   const sections = [{ title: 'Opening pages', lines: [] }];
   cleanLines(text).forEach((line) => {
     if (isChapterHeading(line)) sections.push({ title: line, lines: [] });
-    else sections.at(-1).lines.push(line);
+    else sections[sections.length - 1].lines.push(line);
   });
 
   const namedChapters = sections.slice(1);
@@ -89,21 +89,22 @@ export function buildChapterMap(text) {
 export function chapterGenerationOrder(chapters, selectedChapterIndex = 0) {
   const selected = chapters[selectedChapterIndex] ? selectedChapterIndex : 0;
   const chapterOrder = chapters.map((_, offset) => (selected + offset) % chapters.length);
-  return chapterOrder.flatMap((index) => {
+  const passageOrder = [];
+  chapterOrder.forEach((index) => {
     const chapter = chapters[index];
-    return Array.from({ length: Math.max(0, chapter.endIndex - chapter.startIndex + 1) }, (_, offset) => chapter.startIndex + offset);
+    for (let passageIndex = chapter.startIndex; passageIndex <= chapter.endIndex; passageIndex += 1) passageOrder.push(passageIndex);
   });
+  return passageOrder;
 }
 
 export function chapterGenerationWindow(chapters, selectedChapterIndex = 0, windowSize = 2) {
   if (!chapters.length || windowSize <= 0) return [];
   const selected = chapters[selectedChapterIndex] ? selectedChapterIndex : 0;
-  return chapters.slice(selected, selected + windowSize).flatMap((chapter) => (
-    Array.from(
-      { length: Math.max(0, chapter.endIndex - chapter.startIndex + 1) },
-      (_, offset) => chapter.startIndex + offset,
-    )
-  ));
+  const passageWindow = [];
+  chapters.slice(selected, selected + windowSize).forEach((chapter) => {
+    for (let passageIndex = chapter.startIndex; passageIndex <= chapter.endIndex; passageIndex += 1) passageWindow.push(passageIndex);
+  });
+  return passageWindow;
 }
 
 export function chapterProgress(chapter, readyPassages) {
@@ -143,7 +144,7 @@ export function textItemsToText(items) {
 function dehyphenateLines(lines) {
   const output = [];
   for (const line of lines) {
-    const previous = output.at(-1);
+    const previous = output[output.length - 1];
     if (previous && /\p{Ll}[\u00ad-]$/u.test(previous) && /^\p{Ll}/u.test(line)) {
       output[output.length - 1] = `${previous.slice(0, -1)}${line}`;
     } else {

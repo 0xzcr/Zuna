@@ -52,7 +52,7 @@ function startModelProgress() {
 function finishModelProgress() { clearInterval(modelProgressTimer); modelProgressTimer = null; modelLoadStartedAt = 0; modelProgressValue = null; }
 function hideModelProgress() { finishModelProgress(); const loading = $('#modelLoading'); if (loading) loading.hidden = true; }
 function languageName(voice) { return ({ af: 'American English', am: 'American English', bf: 'British English', bm: 'British English', ef: 'Spanish', em: 'Spanish', ff: 'French', hf: 'Hindi', hm: 'Hindi', if: 'Italian', im: 'Italian', jf: 'Japanese', jm: 'Japanese', pf: 'Brazilian Portuguese', pm: 'Brazilian Portuguese', zf: 'Mandarin', zm: 'Mandarin' })[voice.slice(0, 2)] || 'Kokoro voice'; }
-function voiceDisplayName(voice) { return voice.slice(3).replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) || voice; }
+function voiceDisplayName(voice) { return voice.slice(3).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) || voice; }
 
 function renderVoicePicker() {
   const select = $('#voiceSelect'); if (!select) return;
@@ -307,7 +307,7 @@ async function togglePlayback() {
 }
 
 async function extractPdf(file, key) {
-  const currentExtraction = ++extractionId; notify('Reading your book locally…'); const pdfjs = await import('pdfjs-dist/build/pdf.mjs'); pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+  const currentExtraction = ++extractionId; notify('Reading your book locally…'); const pdfjs = await import('pdfjs-dist/build/pdf.mjs'); pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.compat.mjs';
   const loadingTask = pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }); let passwordCancelled = false; let pdfDocument;
   let shouldLoadModel = false;
   loadingTask.onPassword = (updatePassword) => { const password = window.prompt('This PDF is password protected. Enter its password to open it locally:'); if (password === null) { passwordCancelled = true; loadingTask.destroy(); } else updatePassword(password); };
