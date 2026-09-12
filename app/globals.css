@@ -9,3 +9,58 @@
   letter-spacing: .08em;
   text-transform: uppercase;
 }
+
+.device-check {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  background: var(--reader-backdrop);
+  color: var(--muted);
+  font: 11px var(--mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.mobile-coming-soon {
+  position: relative;
+  display: grid;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  place-items: center;
+  padding: 32px 24px;
+  background: var(--page);
+  color: var(--hero-ink);
+}
+
+.mobile-coming-soon::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(255, 255, 255, .13) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: .12;
+  content: '';
+  mask-image: linear-gradient(to bottom, #000, transparent 80%);
+}
+
+.mobile-coming-soon-content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 440px);
+  text-align: center;
+}
+
+.mobile-coming-soon-content .wordmark { margin-bottom: 22svh; font-size: 34px; }
+.mobile-coming-soon-content .eyebrow { margin-bottom: 18px; }
+.mobile-coming-soon h1 { margin: 0; font-size: clamp(48px, 14vw, 76px); font-weight: 800; letter-spacing: -.085em; line-height: .84; text-transform: uppercase; }
+.mobile-coming-soon h1 span { color: var(--accent); }
+.mobile-coming-soon-copy { max-width: 315px; margin: 24px 0 0; color: rgba(228, 239, 255, .78); font-size: 14px; line-height: 1.45; }
+.mobile-coming-soon-note { margin-top: 24px; padding: 9px 12px; border: 1px solid rgba(228, 239, 255, .28); border-radius: 999px; color: var(--hero-ink); font: 8px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.mobile-coming-soon-art { position: absolute; top: 50%; left: 50%; z-index: 1; width: min(92vw, 430px); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; }
+.mobile-orbit { position: absolute; border: 1px solid rgba(228, 239, 255, .24); border-radius: 50%; }
+.mobile-orbit-one { inset: 5%; animation: spin 22s linear infinite; }
+.mobile-orbit-two { inset: 19% 0; border-color: rgba(241, 132, 102, .5); transform: rotate(-24deg); animation: spin 16s linear infinite reverse; }
+.mobile-art-disc { position: absolute; inset: 29%; border: 3px solid var(--accent); border-radius: 43% 57% 58% 42% / 53% 40% 60% 47%; background: linear-gradient(140deg, var(--accent), #164a54 52%, var(--acid)); opacity: .56; filter: saturate(1.1); animation: orb-morph 10s ease-in-out infinite, orb-float 6s ease-in-out infinite; }

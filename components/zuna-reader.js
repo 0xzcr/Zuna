@@ -1,6 +1,54 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { isPhoneDevice } from '../frontend/device.mjs';
+
+function MobileComingSoon() {
+  return (
+    <main className="mobile-coming-soon" aria-labelledby="mobile-coming-soon-title">
+      <div className="mobile-coming-soon-art" aria-hidden="true">
+        <span className="mobile-orbit mobile-orbit-one" />
+        <span className="mobile-orbit mobile-orbit-two" />
+        <span className="mobile-art-disc" />
+      </div>
+      <div className="mobile-coming-soon-content">
+        <a className="wordmark" href="/" aria-label="Zuna home">zuna</a>
+        <p className="eyebrow">A new way to listen is on its way</p>
+        <h1 id="mobile-coming-soon-title">Zuna mobile<br /><span>is coming soon.</span></h1>
+        <p className="mobile-coming-soon-copy">The full Zuna listening room is currently being tuned for phones. Your books and narration experience will be ready here soon.</p>
+        <div className="mobile-coming-soon-note" role="status">For now, open Zuna on a larger screen.</div>
+      </div>
+    </main>
+  );
+}
+
+function DeviceGate() {
+  const [phone, setPhone] = useState(null);
+
+  useEffect(() => {
+    setPhone(isPhoneDevice({
+      userAgent: navigator.userAgent,
+      maxTouchPoints: navigator.maxTouchPoints,
+      width: Math.min(window.innerWidth, window.innerHeight),
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (phone === false) import('../frontend/app.js');
+  }, [phone]);
+
+  if (phone === true) return <MobileComingSoon />;
+  if (phone === null) return <main className="device-check" aria-live="polite">Preparing Zuna…</main>;
+
+  return (
+    <>
+      <BrandRow />
+      <main><Hero /><ReaderPage /></main>
+      <SettingsDialog />
+      <div className="toast" id="toast" role="status" aria-live="polite" />
+    </>
+  );
+}
 
 function Wordmark() {
   return <a className="wordmark" href="#home" aria-label="Zuna home">zuna</a>;
@@ -159,14 +207,5 @@ function SettingsDialog() {
 }
 
 export default function ZunaReader() {
-  useEffect(() => { import('../frontend/app.js'); }, []);
-
-  return (
-    <>
-      <BrandRow />
-      <main><Hero /><ReaderPage /></main>
-      <SettingsDialog />
-      <div className="toast" id="toast" role="status" aria-live="polite" />
-    </>
-  );
+  return <DeviceGate />;
 }
